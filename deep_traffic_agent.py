@@ -1,4 +1,4 @@
-import tensorflow as tf
+import torch
 import numpy as np
 from random import choice, uniform
 from collections import deque
@@ -7,31 +7,24 @@ from cnn import Cnn
 from config import LEARNING_RATE, EPSILON_GREEDY_START_PROB, EPSILON_GREEDY_END_PROB, EPSILON_GREEDY_MAX_STATES, \
     MAX_MEM, BATCH_SIZE, VISION_W, VISION_B, VISION_F, TARGET_NETWORK_UPDATE_FREQUENCY, LEARN_START
 
-# tf.logging.set_verbosity(tf.logging.INFO)
-
-# FLAGS = tf.app.flags.FLAGS
-
-
 class DeepTrafficAgent:
     def __init__(self, model_name):
         self.model_name = model_name
         self.action_names = ['A', 'D', 'M', 'L', 'R']
         self.num_actions = len(self.action_names)
-        self.memory = deque()
+        self.memory = deque(maxlen=MAX_MEM)
         
-        self.model = Cnn(self.model_name, self.memory)
-        self.target_model = Cnn(self.model_name, self.memory, target=True)
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = Cnn(self.model_name, self.memory).to(self.device)
+        self.target_model = Cnn(self.model_name, self.memory, target=True).to(self.device)
 
         self.count_states = self.model.get_count_states()
         self.count_episodes = self.model.get_count_episodes()
-        # self.state = np.zeros([1, VISION_F + VISION_B + 1, VISION_W * 2 + 1, 1])
-        self.previous_states = np.zeros([1, VISION_F + VISION_B + 1, VISION_W * 2 + 1, 4])
-        self.previous_actions = np.zeros([4])
-        self.previous_actions.fill(2)
-        self.q_values = np.zeros(5)
+        self.previous_states = torch.zeros(1, 1, VISION_F + VISION_B + 1, VISION_W * 2 + 1).to(self.device)
+        self.previous_actions = torch.zeros(1, 4).to(self.device)
+        self.previous_actions.fill_(2)
+        self.q_values = torch.zeros(5).to(self.device)
         self.action = 2
-
-        # self.count_states = self.model.get_count_states()
 
         self.delay_count = 0
 
@@ -51,19 +44,19 @@ class DeepTrafficAgent:
         return self.action_names.index(action)
 
     def act(self, state, is_training=True):
-        self.previous_states = np.array([state], dtype=np.float32)
-        self.previous_actions = np.zeros((1, 4), dtype=np.float32)  # Assuming 4 possible actions
+        self.previous_states = torch.FloatTensor(state).unsqueeze(0).unsqueeze(0).to(self.device)
+        self.previous_actions = torch.zeros(1, 4).to(self.device)
 
-        if is_training and np.random.rand() <= self.epsilon:
+        if is_training and np.random.rand() <= self.epsilon_linear.get_value(self.count_states):
             action = np.random.randint(0, 5)
-            q_values = np.zeros(5)  # Dummy Q-values for random action
+            q_values = torch.zeros(5).to(self.device)
         else:
-            q_values = self.model.get_q_values(self.previous_states, self.previous_actions)
-            action = np.argmax(q_values[0])
+            with torch.no_grad():
+                q_values = self.model(self.previous_states, self.previous_actions)
+            action = q_values.argmax().item()
 
-        self.q_values = q_values[0] if q_values.ndim > 1 else q_values
+        self.q_values = q_values.squeeze().cpu().numpy()
         return self.q_values, self.get_action_name(action)
-
 
     def increase_count_states(self):
         self.model.increase_count_states()
@@ -73,22 +66,12 @@ class DeepTrafficAgent:
         self.model.increase_count_episodes()
         self.count_episodes = self.model.get_count_episodes()
 
-
-
     def remember(self, reward, next_state, end_episode=False, is_training=True):
-        next_state = next_state.reshape(VISION_F + VISION_B + 1, VISION_W * 2 + 1).tolist()
+        next_state = torch.FloatTensor(next_state).unsqueeze(0).unsqueeze(0).to(self.device)
 
-        previous_states = self.previous_states.tolist()
-        for n in range(len(previous_states)):
-            for y in range(len(previous_states[n])):
-                for x in range(len(previous_states[n][y])):
-                    previous_states[n][y][x].pop(0)
-                    previous_states[n][y][x].append(next_state[y][x])
-        next_state = np.array(previous_states).reshape(-1, VISION_F + VISION_B + 1, VISION_W * 2 + 1, 4)
-
-        next_actions = self.previous_actions.copy()
-        next_actions = np.roll(next_actions, -1)
-        next_actions[3] = self.action
+        next_actions = self.previous_actions.clone()
+        next_actions = torch.roll(next_actions, -1, dims=1)
+        next_actions[0, -1] = self.action
 
         self.count_states = self.model.get_count_states()
 
@@ -100,14 +83,11 @@ class DeepTrafficAgent:
 
             if self.model.get_count_states() % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
                 self.model.save_checkpoint(self.model.get_count_states())
-                self.target_model.load_checkpoint()
-                self.model.log_target_network_update()
+                self.target_model.load_state_dict(self.model.state_dict())
                 print("Target network updated")
             elif self.model.get_count_states() % 1000 == 0:
                 self.model.save_checkpoint(self.model.get_count_states())
 
-        if len(self.memory) > MAX_MEM:
-            self.memory.popleft()
         self.memory.append((self.previous_states,
                             next_state,
                             self.action,
@@ -118,10 +98,10 @@ class DeepTrafficAgent:
         self.score = reward
 
         if end_episode:
-            self.previous_states = np.zeros([1, VISION_F + VISION_B + 1, VISION_W * 2 + 1, 4])
-            self.previous_actions = np.zeros([4])
-            self.previous_actions.fill(2)
-            self.q_values = np.zeros(5)
+            self.previous_states = torch.zeros(1, 1, VISION_F + VISION_B + 1, VISION_W * 2 + 1).to(self.device)
+            self.previous_actions = torch.zeros(1, 4).to(self.device)
+            self.previous_actions.fill_(2)
+            self.q_values = torch.zeros(5).to(self.device)
             self.action = 2
             self.score = 0
 
@@ -129,44 +109,14 @@ class DeepTrafficAgent:
 
 
 class LinearControlSignal:
-    """
-    A control signal that changes linearly over time.
-    This is used to change e.g. the learning-rate for the optimizer
-    of the Neural Network, as well as other parameters.
-
-    TensorFlow has functionality for doing this, but it uses the
-    global_step counter inside the TensorFlow graph, while we
-    want the control signals to use a state-counter for the
-    game-environment. So it is easier to make this in Python.
-    """
-
     def __init__(self, start_value, end_value, repeat=False):
-        """
-        Create a new object.
-        :param start_value:
-            Start-value for the control signal.
-        :param end_value:
-            End-value for the control signal.
-        :param num_iterations:
-            Number of iterations it takes to reach the end_value
-            from the start_value.
-        :param repeat:
-            Boolean whether to reset the control signal back to the start_value
-            after the end_value has been reached.
-        """
-
-        # Store arguments in this object.
         self.start_value = start_value
         self.end_value = end_value
         self.num_iterations = EPSILON_GREEDY_MAX_STATES
         self.repeat = repeat
-
-        # Calculate the linear coefficient.
         self._coefficient = (end_value - start_value) / self.num_iterations
 
     def get_value(self, iteration):
-        """Get the value of the control signal for the given iteration."""
-
         if self.repeat:
             iteration %= self.num_iterations
 
