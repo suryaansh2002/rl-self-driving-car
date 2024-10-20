@@ -6,3 +6,5 @@ log/*
 *.psd
 *.svg
 rl_env
+rl-playground
+

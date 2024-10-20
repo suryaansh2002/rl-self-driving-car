@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from players.player import Player
-from players.aggresive_player import AggresivePlayer
+from players.aggressive_player import AggresivePlayer
 from players.sticky_player import StickyPlayer
 from players.deep_traffic_player import DeepTrafficPlayer
 

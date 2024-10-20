@@ -22,7 +22,7 @@ class Player:
         elif self.car.speed > self.max_speed:
             action = 'D'
         else:
-            action = 'M'
+            action = 'M' # TODO Rather than M, we can try to use A.
 
         self.actions.rotate(-1)
         self.actions[len(self.actions) - 1] = action

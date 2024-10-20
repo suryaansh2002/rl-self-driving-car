@@ -83,7 +83,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
                        is_subject=False,
                        score=score,
                        subject=subject_car)
-                   for i in range(6, 7)]
+                   for i in range(6, 7)] # TODO Can remove this line.
 
     frame = 0
 
@@ -241,7 +241,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
         speed_counter.append(subject_car.speed)
 
         if q_values is not None:
-            deep_traffic_agent.model.log_q_values(q_values)
+            deep_traffic_agent.model.log_q_values(q_values) # While loop ends here
 
     episode_count = deep_traffic_agent.model.increase_count_episodes()
     avg_speed = np.average(speed_counter)
