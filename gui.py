@@ -22,7 +22,7 @@ from gui_util import draw_basic_road, \
 from deep_traffic_agent import DeepTrafficAgent
 
 # Advanced view
-# from advanced_view.road import AdvancedRoad
+from advanced_view.road import AdvancedRoad
 
 import config
 
@@ -43,7 +43,7 @@ if config.VISUALENABLED:
     fpsClock = pygame.time.Clock()
 
     main_surface = pygame.display.set_mode((1600, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
-    # advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
+    advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
 else:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
     main_surface = None
@@ -230,7 +230,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
             draw_gauge(main_surface, subject_car.speed)
 
             # Setup advanced view
-            # advanced_road.draw(frame, subject_car)
+            advanced_road.draw(frame, subject_car)
 
             # collision detection
             fpsClock.tick(20000)
