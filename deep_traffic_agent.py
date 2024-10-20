@@ -17,6 +17,8 @@ class DeepTrafficAgent:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = Cnn(self.model_name, self.memory).to(self.device)
         self.target_model = Cnn(self.model_name, self.memory, target=True).to(self.device)
+        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model.eval()
 
         self.count_states = self.model.get_count_states()
         self.count_episodes = self.model.get_count_episodes()
@@ -42,9 +44,11 @@ class DeepTrafficAgent:
 
     def get_action_index(self, action):
         return self.action_names.index(action)
-
+    
     def act(self, state, is_training=True):
-        self.previous_states = torch.FloatTensor(state).unsqueeze(0).unsqueeze(0).to(self.device)
+        # Reshape the state to match the expected input shape
+        self.previous_states = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        self.previous_states = self.previous_states.view(1, 1, VISION_F + VISION_B + 1, VISION_W * 2 + 1)
         self.previous_actions = torch.zeros(1, 4).to(self.device)
 
         if is_training and np.random.rand() <= self.epsilon_linear.get_value(self.count_states):
@@ -56,7 +60,9 @@ class DeepTrafficAgent:
             action = q_values.argmax().item()
 
         self.q_values = q_values.squeeze().cpu().numpy()
+        self.action = action
         return self.q_values, self.get_action_name(action)
+
 
     def increase_count_states(self):
         self.model.increase_count_states()
@@ -73,21 +79,6 @@ class DeepTrafficAgent:
         next_actions = torch.roll(next_actions, -1, dims=1)
         next_actions[0, -1] = self.action
 
-        self.count_states = self.model.get_count_states()
-
-        if is_training and self.model.get_count_states() > LEARN_START and len(self.memory) > LEARN_START:
-            self.model.optimize(self.memory,
-                                learning_rate=LEARNING_RATE,
-                                batch_size=BATCH_SIZE,
-                                target_network=self.target_model)
-
-            if self.model.get_count_states() % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
-                self.model.save_checkpoint(self.model.get_count_states())
-                self.target_model.load_state_dict(self.model.state_dict())
-                print("Target network updated")
-            elif self.model.get_count_states() % 1000 == 0:
-                self.model.save_checkpoint(self.model.get_count_states())
-
         self.memory.append((self.previous_states,
                             next_state,
                             self.action,
@@ -95,6 +86,12 @@ class DeepTrafficAgent:
                             end_episode,
                             self.previous_actions,
                             next_actions))
+
+        self.count_states = self.model.get_count_states()
+
+        if is_training and self.count_states > LEARN_START and len(self.memory) > BATCH_SIZE:
+            self.optimize()
+
         self.score = reward
 
         if end_episode:
@@ -107,6 +104,34 @@ class DeepTrafficAgent:
 
         self.count_states = self.model.increase_count_states()
 
+    def optimize(self):
+        batch = random.sample(self.memory, BATCH_SIZE)
+        states, next_states, actions, rewards, dones, prev_actions, next_actions = zip(*batch)
+
+        states = torch.cat(states).to(self.device)
+        next_states = torch.cat(next_states).to(self.device)
+        actions = torch.tensor(actions, dtype=torch.long).to(self.device)
+        rewards = torch.tensor(rewards, dtype=torch.float).to(self.device)
+        dones = torch.tensor(dones, dtype=torch.float).to(self.device)
+        prev_actions = torch.cat(prev_actions).to(self.device)
+        next_actions = torch.cat(next_actions).to(self.device)
+
+        current_q_values = self.model(states, prev_actions).gather(1, actions.unsqueeze(1))
+        next_q_values = self.target_model(next_states, next_actions).max(1)[0].detach()
+        expected_q_values = rewards + (1 - dones) * 0.99 * next_q_values
+
+        loss = torch.nn.functional.mse_loss(current_q_values, expected_q_values.unsqueeze(1))
+
+        self.model.optimizer.zero_grad()
+        loss.backward()
+        self.model.optimizer.step()
+
+        if self.count_states % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
+            self.target_model.load_state_dict(self.model.state_dict())
+            self.model.save_checkpoint(self.count_states)
+            print("Target network updated")
+
+        self.model.log_training_loss(loss.item())
 
 class LinearControlSignal:
     def __init__(self, start_value, end_value, repeat=False):

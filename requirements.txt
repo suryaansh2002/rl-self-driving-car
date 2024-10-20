@@ -36,7 +36,6 @@ six==1.16.0
 sympy==1.13.3
 tensorboard==2.17.1
 tensorboard-data-server==0.7.2
-tensorflow==2.17.0
 termcolor==2.4.0
 torch==2.4.1
 torchvision==0.19.1

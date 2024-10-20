@@ -5,6 +5,7 @@ import pygame
 import sys
 from pygame.locals import *
 import numpy as np
+import torch  # Add this import
 
 # Import model and GUI related modules
 from car import Car, DEFAULT_CAR_POS
@@ -21,7 +22,7 @@ from gui_util import draw_basic_road, \
 from deep_traffic_agent import DeepTrafficAgent
 
 # Advanced view
-from advanced_view.road import AdvancedRoad
+# from advanced_view.road import AdvancedRoad
 
 import config
 
@@ -42,7 +43,7 @@ if config.VISUALENABLED:
     fpsClock = pygame.time.Clock()
 
     main_surface = pygame.display.set_mode((1600, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
-    advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
+    # advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
 else:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
     main_surface = None
@@ -108,7 +109,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
                     keydown_key.append(event.key)
 
         if config.VISUALENABLED:
-            ressed_key = pygame.key.get_pressed()
+            pressed_key = pygame.key.get_pressed()
             keydown_key = []
 
             for event in pygame.event.get():
@@ -134,7 +135,8 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
             if len(position) > 0:
                 # Back
                 if map_position:
-                    new_car_speed = np.random.randint(30, 91)  # 91 because randint's upper bound is exclusive                    new_car_y = 1010
+                    new_car_speed = np.random.randint(30, 91)  # 91 because randint's upper bound is exclusive
+                    new_car_y = 1010
                     new_car_lane = np.random.choice(position)
                     new_car_y = 1010
                 else:
@@ -189,7 +191,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
                 q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)
                 if not cache:
                     subject_car_action = temp_action
-                    q_values = np.sum(q_values)
+                    q_values = q_values.sum().item()  # Convert PyTorch tensor to Python scalar
                     if not is_training:
                         action_stats[deep_traffic_agent.get_action_index(temp_action)] += 1
             elif config.VISUALENABLED:
@@ -228,7 +230,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
             draw_gauge(main_surface, subject_car.speed)
 
             # Setup advanced view
-            advanced_road.draw(frame, subject_car)
+            # advanced_road.draw(frame, subject_car)
 
             # collision detection
             fpsClock.tick(20000)

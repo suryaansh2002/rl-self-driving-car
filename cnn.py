@@ -3,12 +3,11 @@ import torch.nn as nn
 import torch.optim as optim
 import os
 import numpy as np
-import random
 from config import VISION_W, VISION_F, VISION_B, ROUND, DL_IS_TRAINING
 
 checkpoint_dir = 'models'
 
-GAMMA = 0.95
+GAMMA = 0.99  # Updated to match the value used in deep_traffic_agent.py
 
 class Cnn(nn.Module):
     def __init__(self, model_name, replay_memory, num_actions=5, target=False):
@@ -17,14 +16,13 @@ class Cnn(nn.Module):
         self.model_name = model_name
         self.replay_memory = replay_memory
         self.num_actions = num_actions
-        # Update the state shape to match your actual input
-        self.state_shape = (1, 36, 3)  # Changed to (C, H, W) format for PyTorch
+        self.state_shape = (1, VISION_F + VISION_B + 1, VISION_W * 2 + 1)
         self.action_shape = (4,)
         
         # Define the layers
         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
-        self.fc1 = nn.Linear(32 * 36 * 3 + 4, 100)  # Adjust input size based on your state shape
+        self.fc1 = nn.Linear(32 * (VISION_F + VISION_B + 1) * (VISION_W * 2 + 1) + 4, 100)
         self.fc2 = nn.Linear(100, num_actions)
         
         self.optimizer = optim.Adam(self.parameters(), lr=1e-3)
@@ -33,7 +31,6 @@ class Cnn(nn.Module):
         self.count_episodes = 0
         self.count_states = 0
         
-        # Device configuration
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
 
@@ -50,46 +47,6 @@ class Cnn(nn.Module):
         actions = torch.FloatTensor(actions).to(self.device)
         with torch.no_grad():
             return self(states, actions).cpu().numpy()
-
-    def optimize(self, memory, batch_size=128, learning_rate=1e-3, target_network=None):
-        if len(memory) < batch_size:
-            return
-
-        states, targets, actions = self.get_memory_component(memory, batch_size, target_network)
-        
-        states = torch.FloatTensor(states).to(self.device)
-        targets = torch.FloatTensor(targets).to(self.device)
-        actions = torch.FloatTensor(actions).to(self.device)
-        
-        self.optimizer.zero_grad()
-        q_values = self(states, actions)
-        loss = self.loss_fn(q_values, targets)
-        loss.backward()
-        self.optimizer.step()
-
-        self.log_training_loss(loss.item())
-
-    def get_memory_component(self, memory, batch_size, target_network=None):
-        minibatch = random.sample(memory, batch_size)
-        states = []
-        actions = []
-        targets = []
-        for state, next_state, action, reward, end_episode, _actions, next_actions in minibatch:
-            states.append(state)
-            actions.append(_actions)
-            target = reward
-            if not end_episode:
-                q_values = target_network.get_q_values(next_state, next_actions) if target_network else self.get_q_values(next_state, next_actions)
-                target = reward + GAMMA * np.max(q_values)
-
-            current = self.get_q_values(state, _actions)
-            current[0][action] = target
-            targets.append(current[0])
-        
-        states = np.array(states).reshape(-1, 1, VISION_B + VISION_F + 1, VISION_W * 2 + 1)  # Changed shape for PyTorch
-        targets = np.array(targets).reshape(-1, 5)
-        actions = np.array(actions)
-        return states, targets, actions
 
     def save_checkpoint(self, current_iteration):
         if not self.main or not DL_IS_TRAINING:
@@ -119,20 +76,18 @@ class Cnn(nn.Module):
 
     def increase_count_episodes(self):
         self.count_episodes += 1
+        return self.count_episodes
 
     def get_count_states(self):
         return self.count_states
 
     def increase_count_states(self):
         self.count_states += 1
+        return self.count_states
 
-    # Logging methods
     def log_training_loss(self, loss):
         # Implement logging as needed (e.g., using tensorboard or a custom solution)
         print(f"Training loss: {loss}")
-
-    # Other logging methods (log_average_speed, log_testing_speed, etc.) should be implemented
-    # using your preferred logging solution (e.g., tensorboard, custom file logging, etc.)
 
     def log_q_values(self, q_values):
         # Implement logging as needed
@@ -142,6 +97,33 @@ class Cnn(nn.Module):
         # Implement histogram logging as needed
         pass
 
-# Note: Some methods like get_weights_variable, get_variable_value, and get_tensor_value
-# are not directly applicable in PyTorch and have been removed. PyTorch allows direct
-# access to model parameters and tensors without needing these methods.
+    # Add these methods to match the usage in deep_traffic_agent.py
+    def log_average_speed(self, speed):
+        print(f"Average speed: {speed}")
+
+    def log_testing_speed(self, speed):
+        print(f"Testing speed: {speed}")
+
+    def log_total_frame(self, frame):
+        print(f"Total frames: {frame}")
+
+    def log_terminated(self, terminated):
+        print(f"Terminated: {terminated}")
+
+    def log_reward(self, reward):
+        print(f"Reward: {reward}")
+
+    def log_hard_brake_count(self, count):
+        print(f"Hard brake count: {count}")
+
+    def log_average_test_speed_40(self, speed):
+        print(f"Average test speed (40 cars): {speed}")
+
+    def log_average_test_speed_20(self, speed):
+        print(f"Average test speed (20 cars): {speed}")
+
+    def log_average_test_speed_60(self, speed):
+        print(f"Average test speed (60 cars): {speed}")
+
+    def log_action_frequency(self, action_stats):
+        print(f"Action frequency: {action_stats}")
