@@ -7,4 +7,4 @@ log/*
 *.svg
 rl_env
 rl-playground
-
+.DS_Store
