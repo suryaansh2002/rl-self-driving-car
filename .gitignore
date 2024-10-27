@@ -8,3 +8,5 @@ log/*
 rl_env
 rl-playground
 logs
+.DS_Store
+rl_playground
