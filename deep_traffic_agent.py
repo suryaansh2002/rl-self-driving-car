@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from random import choice, uniform
 from collections import deque
+import logging
 
 from cnn import Cnn
 from config import LEARNING_RATE, EPSILON_GREEDY_START_PROB, EPSILON_GREEDY_END_PROB, EPSILON_GREEDY_MAX_STATES, \
@@ -38,6 +39,17 @@ class DeepTrafficAgent:
         self.value = 0
 
         self.score = 0
+        self.logger = self._setup_logger()
+
+    def _setup_logger(self):
+        logger = logging.getLogger(f"DeepTrafficAgent_{self.model_name}")
+        logger.setLevel(logging.INFO)
+        file_handler = logging.FileHandler(f"logs/{self.model_name}_training.log")
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        return logger
+
 
     def get_action_name(self, action):
         return self.action_names[action]
@@ -61,6 +73,7 @@ class DeepTrafficAgent:
 
         self.q_values = q_values.squeeze().cpu().numpy()
         self.action = action
+        self.logger.info(f"State shape: {self.previous_states.shape}, Action: {self.get_action_name(action)}, Q-values: {self.q_values}")
         return self.q_values, self.get_action_name(action)
 
 
@@ -74,15 +87,24 @@ class DeepTrafficAgent:
 
     def remember(self, reward, next_state, end_episode=False, is_training=True):
         next_state = torch.FloatTensor(next_state).unsqueeze(0).unsqueeze(0).to(self.device)
+        clipped_reward = max(min(reward - self.score, 1), -1)
 
         next_actions = self.previous_actions.clone()
         next_actions = torch.roll(next_actions, -1, dims=1)
         next_actions[0, -1] = self.action
 
+        # self.memory.append((self.previous_states,
+        #                     next_state,
+        #                     self.action,
+        #                     reward - self.score,
+        #                     end_episode,
+        #                     self.previous_actions,
+        #                     next_actions))
+        
         self.memory.append((self.previous_states,
                             next_state,
                             self.action,
-                            reward - self.score,
+                            clipped_reward,
                             end_episode,
                             self.previous_actions,
                             next_actions))
@@ -102,6 +124,7 @@ class DeepTrafficAgent:
             self.action = 2
             self.score = 0
 
+        self.logger.info(f"Remembering - Reward: {reward - self.score}, End episode: {end_episode}, Memory size: {len(self.memory)}")
         self.count_states = self.model.increase_count_states()
 
     def optimize(self):
@@ -126,10 +149,14 @@ class DeepTrafficAgent:
         loss.backward()
         self.model.optimizer.step()
 
+        self.logger.info(f"Optimizing - Loss: {loss.item()}, Mean Q-value: {current_q_values.mean().item()}")
+
         if self.count_states % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
+            self.logger.info("Updating target network")
             self.target_model.load_state_dict(self.model.state_dict())
             self.model.save_checkpoint(self.count_states)
             print("Target network updated")
+
 
         self.model.log_training_loss(loss.item())
 
