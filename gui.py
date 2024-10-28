@@ -68,7 +68,8 @@ logger = logging.getLogger('DeepTraffic')
 # New episode/game round
 while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
     is_training = config.DL_IS_TRAINING and episode_count < config.MAX_EPISODE and not config.VISUALENABLED
-
+    print("Is training: ", is_training)
+    
     # Score object
     score = Score(score=0)
 
@@ -194,6 +195,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
             if config.DLAGENTENABLED:
                 # Get prediction from DeepTrafficAgent
                 q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)
+                print("Q-values: ", q_values, 'Car is subject: ', car.subject)
                 if not cache:
                     subject_car_action = temp_action
                     q_values = q_values.sum().item()  # Convert PyTorch tensor to Python scalar

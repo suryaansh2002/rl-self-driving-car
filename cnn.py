@@ -44,6 +44,7 @@ class Cnn(nn.Module):
 
         self.writer = SummaryWriter(f"{checkpoint_dir}/{model_name}")
         self.logger = self._setup_logger()
+        self.load_checkpoint()
 
     def _setup_logger(self):
         logger = logging.getLogger(f"Cnn_{self.model_name}")
@@ -73,7 +74,8 @@ class Cnn(nn.Module):
     def save_checkpoint(self, current_iteration):
         if not self.main or not DL_IS_TRAINING:
             return False
-        checkpoint_path = os.path.join(checkpoint_dir, self.model_name, f"checkpoint-{current_iteration}.pth")
+        checkpoint_path = os.path.join(checkpoint_dir, self.model_name, f"checkpoint.pth")
+        print("Checkpoint path: ", checkpoint_path)
         torch.save({
             'model_state_dict': self.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
@@ -86,6 +88,7 @@ class Cnn(nn.Module):
     def load_checkpoint(self):
         try:
             checkpoint_path = os.path.join(checkpoint_dir, self.model_name, "checkpoint.pth")
+            print("Checkpoint path: ", checkpoint_path)
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
             self.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
