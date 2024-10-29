@@ -51,9 +51,11 @@ class DeepTrafficAgent:
         self.previous_states = self.previous_states.view(1, 1, VISION_F + VISION_B + 1, VISION_W * 2 + 1)
         self.previous_actions = torch.zeros(1, 4).to(self.device)
 
+        # Exploration
         if is_training and np.random.rand() <= self.epsilon_linear.get_value(self.count_states):
             action = np.random.randint(0, 5)
             q_values = torch.zeros(5).to(self.device)
+        # Exploitation
         else:
             with torch.no_grad():
                 q_values = self.model(self.previous_states, self.previous_actions)

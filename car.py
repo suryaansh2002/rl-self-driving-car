@@ -69,14 +69,20 @@ class Car():
         self.alternate_line_switching = 0
 
     def identify(self):
+        # Determines whether the car is within the game boundaries.
+        # Updates the lane map to reflect the car's current position and lane.
+        # Handles lane switching if applicable.
         min_box = int(math.floor(self.y / 10.0)) - 1
         max_box = int(math.ceil(self.y / 10.0))
 
         # Out of bound
         if self.y < -200 or self.y > 1200:
-            self.removed = True
+            self.removed = True # no longer in play
             return False
 
+        # updates the lane_map at the position corresponding to the car's current lane (self.lane - 1)
+        # with the car instance (self). If the car is switching lanes (self.switching_lane is between 1 and 7),
+        # it also updates the lane map at the switching lane position.
         if 0 <= min_box < 100:
             self.lane_map[min_box][self.lane - 1] = self
             if 1 <= self.switching_lane <= 7:
@@ -241,6 +247,8 @@ class Car():
         self.score.penalty()
 
     def decide(self, end_episode, cache=False, is_training=True):
+        # If the car is a subject car (self.subject is None), it uses the decide_with_vision method to decide its next action.
+        # It also checks if the result is a lane switch ('L' or 'R') and penalizes if there was recent lane switching.
         if self.subject is None:
             q_values, result = self.player.decide_with_vision(self.get_vision(),
                                                   self.score.score,

@@ -34,23 +34,26 @@ deep_traffic_agent = DeepTrafficAgent(model_name)
 # Define game constant
 OPTIMAL_CARS_IN_SCENE = 15
 ACTION_MAP = ['A', 'M', 'D', 'L', 'R']
+# correspond to the keyboard keys
 monitor_keys = [pygame.K_UP, pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN]
 
 if config.VISUALENABLED:
-    pygame.init()
-    pygame.font.init()
-    pygame.display.set_caption('DeepTraffic')
-    fpsClock = pygame.time.Clock()
+    pygame.init()       # Initializes all pygame modules
+    pygame.font.init()  # Initializes font module enabling text rendering
+    pygame.display.set_caption('DeepTraffic')   # Title of pygame window set to this name
+    fpsClock = pygame.time.Clock()  # creates clock to manage frame rate of the game
 
+    # sets up main display surface with resolution of 1600x800 pixels. flags use are:
+    # pygame.DOUBLEBUF - Uses double buffering to help with smooth animations
+    # pygame.HWSURFACE: Uses hardware acceleration if available. Using pygame.HWSURFACE is a way to leverage the GPU for better performance in rendering graphics. 
     main_surface = pygame.display.set_mode((1600, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
     advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
 else:
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    os.environ["SDL_VIDEODRIVER"] = "dummy"     # Run without opening window(during testing for eg.)
     main_surface = None
 
 lane_map = [[0 for x in range(7)] for y in range(100)]
-
-episode_count = deep_traffic_agent.model.get_count_episodes()
+episode_count = deep_traffic_agent.model.get_count_episodes()   # deep_traffic_agent-->cnn-->get_count_episodes-->self.count_episodes
 
 speed_counter_avg = []
 hard_brake_avg = []
@@ -58,19 +61,19 @@ alternate_line_switching = []
 
 action_stats = np.zeros(5, np.int32)
 
-PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR
+PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR  # 60
 
 # New episode/game round
-while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
-    is_training = config.DL_IS_TRAINING and episode_count < config.MAX_EPISODE and not config.VISUALENABLED
+while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 2000 + 200*3
+    is_training = config.DL_IS_TRAINING and episode_count < config.MAX_EPISODE and not config.VISUALENABLED     #False and ep_count< 2000 and not True
 
     # Score object
     score = Score(score=0)
 
-    subject_car = Car(main_surface,
-                      lane_map,
+    subject_car = Car(main_surface,     # initialized above
+                      lane_map,         #  ""
                       speed=60,
-                      y=DEFAULT_CAR_POS,
+                      y=DEFAULT_CAR_POS,    # 700
                       lane=4,
                       is_subject=True,
                       score=score,
@@ -78,8 +81,8 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
     object_cars = [Car(main_surface,
                        lane_map,
                        speed=60,
-                       y=800,
-                       lane=6,
+                       y=800,           # means wat?
+                       lane=6,          # means ?
                        is_subject=False,
                        score=score,
                        subject=subject_car)
@@ -97,17 +100,27 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
         # brick draw
         # bat and ball draw
         # events
-        if config.VISUALENABLED and not config.DLAGENTENABLED:
-            pressed_key = pygame.key.get_pressed()
-            keydown_key = []
 
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    keydown_key.append(event.key)
+        # Alternate for lines 105 to 123 is below(124-133)
+        # if config.VISUALENABLED and not config.DLAGENTENABLED:      # True and not False
+        #     pressed_key = pygame.key.get_pressed()  # returns a list representing the state of every key on the keyboard. Each element in the list is 1 if the corresponding key is currently being held down, and 0 otherwise.
+        #     keydown_key = []
 
+        #     for event in pygame.event.get():    # iterates through all the events in the Pygame event queue, allowing the program to respond to user inputs and other events.
+        #         if event.type == QUIT:
+        #             pygame.quit()
+        #             sys.exit()
+        #         elif event.type == pygame.KEYDOWN:  # If a KEYDOWN event is detected (i.e., a key was just pressed down), the key code of the pressed key is appended to the keydown_key list.
+        #             keydown_key.append(event.key)
+
+        # if config.VISUALENABLED:
+        #     pressed_key = pygame.key.get_pressed()
+        #     keydown_key = []
+
+        #     for event in pygame.event.get():
+        #         if event.type == QUIT or event.type == pygame.K_q:  # pygame.K_q is being used to refer to the Q key
+        #             pygame.quit()
+        #             sys.exit()
         if config.VISUALENABLED:
             pressed_key = pygame.key.get_pressed()
             keydown_key = []
@@ -116,32 +129,37 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
                 if event.type == QUIT or event.type == pygame.K_q:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
+                    keydown_key.append(event.key)
+
 
         # Setup game background
         draw_basic_road(main_surface, subject_car.speed)
 
         # Car to identify available moves in the order from top to bottom
         cars = [subject_car]
-        cars.extend([o_car for o_car in object_cars if o_car.removed is False])
+        cars.extend([o_car for o_car in object_cars if o_car.removed is False])     # filtering out any cars that have been marked for removal.
+        # This line sorts the cars list based on the y attribute of each car (t_car.y).
+        # The reverse=True argument sorts the cars in descending order, meaning cars with higher y values (presumably further down the screen) come first in the list.
         cars.sort(key=lambda t_car: t_car.y, reverse=True)
 
-        available_lanes_for_new_car = identify_free_lane(cars)
+        available_lanes_for_new_car = identify_free_lane(cars)  # to be explored
 
         # Add more cars to the scene
         if len(cars) < PREDEFINED_MAX_CAR and np.random.standard_normal(1)[0] >= 0:
-            # Decide position(Front or back)
+            # Decide position(Front or back) 0 for back and 1 for front
             map_position = np.random.choice([0, 1], 1)[0]
             position = available_lanes_for_new_car[map_position]
             if len(position) > 0:
                 # Back
-                if map_position:
+                if map_position:    # back : 1
                     new_car_speed = np.random.randint(30, 91)  # 91 because randint's upper bound is exclusive
-                    new_car_y = 1010
+                    new_car_y = 1010    # indicating that it will appear at the back of the screen
                     new_car_lane = np.random.choice(position)
                     new_car_y = 1010
                 else:
                     new_car_speed = np.random.randint(30, 61)
-                    new_car_y = -100
+                    new_car_y = -100    # will appear front of the screen
                     new_car_lane = np.random.choice(position)
                 # Decide lanes
                 new_car = Car(main_surface,
@@ -153,9 +171,9 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
                               subject=subject_car,
                               score=score)
                 object_cars.append(new_car)
-                if position:
+                if position:    # if available lane, new car is added to end of cars
                     cars.append(new_car)
-                else:
+                else:           # else new car inserted at beginning of cars list, ensuring it gets processed first in subsequent operations.
                     cars.insert(0, new_car)
 
         # main game logic
@@ -166,7 +184,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
 
         # Identify car position
         for car in cars:
-            car.identify()
+            car.identify()  # updates lane positions and validates car positions
 
         for car in cars:
             car.identify_available_moves()
