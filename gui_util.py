@@ -49,7 +49,7 @@ white = pygame.Color(255, 255, 255)
 grey = pygame.Color(128, 128, 128)
 yellow = pygame.Color(255, 255, 0, 128)
 orange = pygame.Color(255, 140, 0, 128)
-
+green = pygame.Color(0, 255, 0,100)
 IMAGE_PATH = './images'
 
 if config.VISUALENABLED:
@@ -109,15 +109,15 @@ def draw_basic_road(surface, speed):
     pygame.draw.line(surface, black, (ROAD_VIEW_OFFSET + 367, -10), (ROAD_VIEW_OFFSET + 367, 1000), 5)
 
     line_marking_offset = randint(0, 10)
-    for l in range(1, 7):
-        draw_dashed_line(
-            surface,
-            grey,
-            (ROAD_VIEW_OFFSET + l * 50 + 15, int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)),
-            (ROAD_VIEW_OFFSET + l * 50 + 15, 1000),
-            width=1,
-            dash_length=5
-        )
+    # for l in range(1, 7):
+    #     draw_dashed_line(
+    #         surface,
+    #         grey,
+    #         (ROAD_VIEW_OFFSET + l * 50 + 15, int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)),
+    #         (ROAD_VIEW_OFFSET + l * 50 + 15, 1000),
+    #         width=1,
+    #         dash_length=5
+    #     )
 
 
 def draw_road_overlay_safety(surface, lane_map):
@@ -145,7 +145,7 @@ def draw_road_overlay_vision(surface, subject_car):
 
     for y in range(min_y, max_y + 1):
         for x in range(min_x, max_x + 1):
-            pygame.draw.rect(surface, orange, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10))
+            pygame.draw.rect(surface, green, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10))
             pygame.draw.rect(surface, grey, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10), 1)
 
 
@@ -185,7 +185,7 @@ def draw_inputs(surface, vision):
     surface.blit(vision_title, (INPUT_VIEW_OFFSET_X - 10, INPUT_VIEW_OFFSET_Y))
     for y_i in range(len(vision)):
         for x_i, x in enumerate(vision[y_i]):
-            pygame.draw.rect(surface, orange if x != 0 else white,
+            pygame.draw.rect(surface, green if x != 0 else white,
                              (INPUT_VIEW_OFFSET_X + x_i * 10 + 80, INPUT_VIEW_OFFSET_Y + y_i * 10, 10, 10))
             pygame.draw.rect(surface, grey,
                              (INPUT_VIEW_OFFSET_X + x_i * 10 + 1 + 80, INPUT_VIEW_OFFSET_Y + y_i * 10, 10, 10), 1)
@@ -193,16 +193,19 @@ def draw_inputs(surface, vision):
 
 def draw_actions(surface, action):
     action_title = font_28.render("Action:", False, (0, 0, 0))
+    action_text = font_28.render(action, False, (0, 0, 0))
+    
     surface.blit(action_title, (INPUT_VIEW_OFFSET_X - 10, INPUT_VIEW_OFFSET_Y + 370))
+    surface.blit(action_text, (INPUT_VIEW_OFFSET_X + 90, INPUT_VIEW_OFFSET_Y + 370))
 
-    surface.blit(left_on if action == 'L' else left_off,
-                 (INPUT_VIEW_OFFSET_X + 80, INPUT_VIEW_OFFSET_Y + 370, 34, 70))
-    surface.blit(right_on if action == 'R' else right_off,
-                 (INPUT_VIEW_OFFSET_X + 80 + 40, INPUT_VIEW_OFFSET_Y + 370, 34, 70))
-    surface.blit(brake_on if action == 'D' else brake_off,
-                 (INPUT_VIEW_OFFSET_X + 80, INPUT_VIEW_OFFSET_Y + 410, 34, 70))
-    surface.blit(accelerate_on if action == 'A' else accelerate_off,
-                 (INPUT_VIEW_OFFSET_X + 80 + 40, INPUT_VIEW_OFFSET_Y + 410, 34, 70))
+    # surface.blit(left_on if action == 'L' else left_off,
+    #              (INPUT_VIEW_OFFSET_X + 80, INPUT_VIEW_OFFSET_Y + 370, 34, 70))
+    # surface.blit(right_on if action == 'R' else right_off,
+    #              (INPUT_VIEW_OFFSET_X + 80 + 40, INPUT_VIEW_OFFSET_Y + 370, 34, 70))
+    # surface.blit(brake_on if action == 'D' else brake_off,
+    #              (INPUT_VIEW_OFFSET_X + 80, INPUT_VIEW_OFFSET_Y + 410, 34, 70))
+    # surface.blit(accelerate_on if action == 'A' else accelerate_off,
+    #              (INPUT_VIEW_OFFSET_X + 80 + 40, INPUT_VIEW_OFFSET_Y + 410, 34, 70))
 
 
 class Score:
@@ -232,16 +235,17 @@ class Score:
 
 
 def draw_gauge(surface, speed):
-    im = Image.new("RGB", (200, 200), (255, 255, 255, 0))
-    g = GaugeDraw(im, 0, 110)
-    g.render_simple_gauge(value=speed, major_ticks=10, minor_ticks=5, label="{}kmh".format(speed))
+    # Remove the existing gauge drawing code
+    # im = Image.new("RGB", (200, 200), (255, 255, 255, 0))
+    # g = GaugeDraw(im, 0, 110)
+    # g.render_simple_gauge(value=speed, major_ticks=10, minor_ticks=5, label="{}kmh".format(speed))
+    # gauge = pygame.image.fromstring(im.tobytes(), im.size, im.mode)
 
-    gauge = pygame.image.fromstring(im.tobytes(), im.size, im.mode)
-
+    # Draw the speed as an integer number
     speed_title = font_28.render("Speed:", False, (0, 0, 0))
+    speed_value = font_60.render(str(int(speed)), False, (0, 0, 0))
     surface.blit(speed_title, (INPUT_VIEW_OFFSET_X - 10, 10))
-    surface.blit(gauge, ((INPUT_VIEW_OFFSET_X - 10, 35), (200, 200)))
-
+    surface.blit(speed_value, (INPUT_VIEW_OFFSET_X - 10 + 80, 35))
 
 def draw_score(surface, score):
     score_title = font_28.render("Score:", False, (0, 0, 0))

@@ -28,7 +28,7 @@ DEFAULT_CAR_POS = 700
 IMAGE_PATH = "./images"
 
 if VISUALENABLED:
-    red_car = pygame.image.load(os.path.join(IMAGE_PATH, "red_car.png"))
+    red_car = pygame.image.load(os.path.join(IMAGE_PATH, "red_car.webp"))
     red_car = pygame.transform.scale(red_car, (34, 70))
     white_car = pygame.image.load(os.path.join(IMAGE_PATH, "white_car.png"))
     white_car = pygame.transform.scale(white_car, (34, 70))

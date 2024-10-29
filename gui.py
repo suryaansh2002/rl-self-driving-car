@@ -43,7 +43,7 @@ if config.VISUALENABLED:
     pygame.display.set_caption('DeepTraffic')
     fpsClock = pygame.time.Clock()
 
-    main_surface = pygame.display.set_mode((1600, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
+    main_surface = pygame.display.set_mode((700, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
     advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
 else:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -122,6 +122,8 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
                 if event.type == QUIT or event.type == pygame.K_q:
                     pygame.quit()
                     sys.exit()
+
+        advanced_road.draw(frame, subject_car)
 
         # Setup game background
         draw_basic_road(main_surface, subject_car.speed)
@@ -237,7 +239,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
             draw_gauge(main_surface, subject_car.speed)
 
             # Setup advanced view
-            advanced_road.draw(frame, subject_car)
 
             # collision detection
             fpsClock.tick(20000)
