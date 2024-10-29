@@ -6,6 +6,7 @@ import sys
 from pygame.locals import *
 import numpy as np
 import torch  # Add this import
+import logging
 
 # Import model and GUI related modules
 from car import Car, DEFAULT_CAR_POS
@@ -62,6 +63,10 @@ alternate_line_switching = []
 action_stats = np.zeros(5, np.int32)
 
 PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR  # 60
+
+logging.basicConfig(filename='logs/training_progress.log', level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('DeepTraffic')
 
 # New episode/game round
 while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 2000 + 200*3
@@ -207,6 +212,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             if config.DLAGENTENABLED:
                 # Get prediction from DeepTrafficAgent
                 q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)
+                print("Q-values: ", q_values, 'Car is subject: ', car.subject)
                 if not cache:
                     subject_car_action = temp_action
                     q_values = q_values.sum().item()  # Convert PyTorch tensor to Python scalar
@@ -260,9 +266,14 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
 
         if q_values is not None:
             deep_traffic_agent.model.log_q_values(q_values) # While loop ends here
+            logger.info(f"Episode {episode_count}, Frame {frame}: Q-values: {q_values}")
+
 
     episode_count = deep_traffic_agent.model.increase_count_episodes()
     avg_speed = np.average(speed_counter)
+    total_reward = score.score
+    logger.info(f"Episode {episode_count} completed. Average speed: {avg_speed}, Total frames: {frame}, Total reward: {total_reward}, Final speed: {subject_car.speed}")
+
     if not is_training:
         speed_counter_avg.append(avg_speed)
         deep_traffic_agent.model.log_testing_speed(avg_speed)
@@ -301,3 +312,4 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             alternate_line_switching = []
 
 deep_traffic_agent.model.log_action_frequency(action_stats)
+logger.info(f"Training completed. Total episodes: {episode_count}, Action frequencies: {action_stats}")
