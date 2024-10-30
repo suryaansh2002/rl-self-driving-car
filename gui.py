@@ -35,23 +35,26 @@ deep_traffic_agent = DeepTrafficAgent(model_name)
 # Define game constant
 OPTIMAL_CARS_IN_SCENE = 15
 ACTION_MAP = ['A', 'M', 'D', 'L', 'R']
+# correspond to the keyboard keys
 monitor_keys = [pygame.K_UP, pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN]
 
 if config.VISUALENABLED:
-    pygame.init()
-    pygame.font.init()
-    pygame.display.set_caption('DeepTraffic')
-    fpsClock = pygame.time.Clock()
+    pygame.init()       # Initializes all pygame modules
+    pygame.font.init()  # Initializes font module enabling text rendering
+    pygame.display.set_caption('DeepTraffic')   # Title of pygame window set to this name
+    fpsClock = pygame.time.Clock()  # creates clock to manage frame rate of the game
 
+    # sets up main display surface with resolution of 1600x800 pixels. flags use are:
+    # pygame.DOUBLEBUF - Uses double buffering to help with smooth animations
+    # pygame.HWSURFACE: Uses hardware acceleration if available. Using pygame.HWSURFACE is a way to leverage the GPU for better performance in rendering graphics. 
     main_surface = pygame.display.set_mode((1600, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
     advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
 else:
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    os.environ["SDL_VIDEODRIVER"] = "dummy"     # Run without opening window(during testing for eg.)
     main_surface = None
 
 lane_map = [[0 for x in range(7)] for y in range(100)]
-
-episode_count = deep_traffic_agent.model.get_count_episodes()
+episode_count = deep_traffic_agent.model.get_count_episodes()   # deep_traffic_agent-->cnn-->get_count_episodes-->self.count_episodes
 
 speed_counter_avg = []
 hard_brake_avg = []
@@ -59,24 +62,23 @@ alternate_line_switching = []
 
 action_stats = np.zeros(5, np.int32)
 
-PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR
+PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR  # 60
 
 logging.basicConfig(filename='logs/training_progress.log', level=logging.INFO, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('DeepTraffic')
 
 # New episode/game round
-while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
-    is_training = config.DL_IS_TRAINING and episode_count < config.MAX_EPISODE and not config.VISUALENABLED
-    print("Is training: ", is_training)
-    
+while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 2000 + 200*3
+    is_training = config.DL_IS_TRAINING and episode_count < config.MAX_EPISODE and not config.VISUALENABLED     #False and ep_count< 2000 and not True
+
     # Score object
     score = Score(score=0)
     # All cars start with speed 60
     subject_car = Car(main_surface,
                       lane_map,
                       speed=60,
-                      y=DEFAULT_CAR_POS,
+                      y=DEFAULT_CAR_POS,    # 700
                       lane=4,
                       is_subject=True,
                       score=score, # score initialized to 0
@@ -84,8 +86,8 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
     object_cars = [Car(main_surface,
                        lane_map,
                        speed=60,
-                       y=800,
-                       lane=6,
+                       y=800,           # means wat?
+                       lane=6,          # means ?
                        is_subject=False,
                        score=score, # score initialized to 0
                        subject=subject_car)
@@ -104,12 +106,10 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
             pressed_key = pygame.key.get_pressed()
             keydown_key = []
 
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    keydown_key.append(event.key)
+        # Alternate for lines 105 to 123 is below(124-133)
+        # if config.VISUALENABLED and not config.DLAGENTENABLED:      # True and not False
+        #     pressed_key = pygame.key.get_pressed()  # returns a list representing the state of every key on the keyboard. Each element in the list is 1 if the corresponding key is currently being held down, and 0 otherwise.
+        #     keydown_key = []
 
         if config.VISUALENABLED: # Show GUI, playing using DeepTrafficAgent
             pressed_key = pygame.key.get_pressed()
@@ -119,13 +119,18 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:
                 if event.type == QUIT or event.type == pygame.K_q:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
+                    keydown_key.append(event.key)
+
 
         # Setup game background
         draw_basic_road(main_surface, subject_car.speed)
 
         # Car to identify available moves in the order from top to bottom
         cars = [subject_car]
-        cars.extend([o_car for o_car in object_cars if o_car.removed is False])
+        cars.extend([o_car for o_car in object_cars if o_car.removed is False])     # filtering out any cars that have been marked for removal.
+        # This line sorts the cars list based on the y attribute of each car (t_car.y).
+        # The reverse=True argument sorts the cars in descending order, meaning cars with higher y values (presumably further down the screen) come first in the list.
         cars.sort(key=lambda t_car: t_car.y, reverse=True)
         available_lanes_for_new_car = identify_free_lane(cars)
         print("Available lanes for new car: ", available_lanes_for_new_car)

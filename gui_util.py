@@ -99,20 +99,26 @@ def draw_dashed_line_delay(surface, color, start_pos, end_pos, width=1, dash_len
         pygame.time.delay(delay)
 
 def draw_basic_road(surface, speed):
-    if not config.VISUALENABLED:
+    if not config.VISUALENABLED:    # works only if this is True
         return
 
-    surface.fill(white)
+    surface.fill(white)         # pygame surface object
     # Left most lane marking
-    pygame.draw.line(surface, black, (ROAD_VIEW_OFFSET + 13, -10), (ROAD_VIEW_OFFSET + 13, 1000), 5)
+    pygame.draw.line(surface, black, (ROAD_VIEW_OFFSET + 13, -10), (ROAD_VIEW_OFFSET + 13, 1000), 5)    # 1010 + 13, -10
     # Right most lane marking
     pygame.draw.line(surface, black, (ROAD_VIEW_OFFSET + 367, -10), (ROAD_VIEW_OFFSET + 367, 1000), 5)
 
-    line_marking_offset = randint(0, 10)
+    line_marking_offset = randint(0, 10)    # A random offset (line_marking_offset) is generated to add some variation to the position of the dashed lines
     for l in range(1, 7):
         draw_dashed_line(
             surface,
             grey,
+            # Horizontal Positioning - ROAD_VIEW_OFFSET + l * 50 + 15, Vertical Offset Based on Speed - int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)
+            # speed / (MAX_SPEED * 1.0) calculates a ratio of the current speed to the maximum speed. 
+            # If the car is going at maximum speed, this ratio will be 1 (or close to it). If it's stationary, the ratio will be 0.
+            # This ratio is multiplied by -1 and line_marking_offset, which gives a negative vertical offset. The reason for the negative sign is likely to move 
+            # the dashed lines up on the screen as the speed increases, creating the effect that they are moving down relative to the car.
+            # At higher speeds, it looks like the dashed lines are passing by more quickly, while at lower speeds, they appear to move more slowly
             (ROAD_VIEW_OFFSET + l * 50 + 15, int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)),
             (ROAD_VIEW_OFFSET + l * 50 + 15, 1000),
             width=1,

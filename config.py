@@ -12,9 +12,9 @@ VISUAL_VISION_W = 7  # less than 7
 VISUAL_VISION_F = 21  # less than 70
 VISUAL_VISION_B = 7  # less than 30
 
-VISUALENABLED = False
-DLAGENTENABLED = True
-DL_IS_TRAINING = True
+VISUALENABLED = False    #false
+DLAGENTENABLED = True  #true
+DL_IS_TRAINING = True  #true
 
 MAX_SIMULATION_CAR = 60
 

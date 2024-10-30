@@ -107,7 +107,7 @@ class Car:
 
         # Remove car if it's too far off screen (either above or below)
         if self.y < -200 or self.y > 1200:
-            self.removed = True
+            self.removed = True # no longer in play
             return False
 
         # Register the car's presence in the front grid box
@@ -330,6 +330,8 @@ class Car:
         # self.score.penalty()      # Constant penalty per frame
 
     def decide(self, end_episode, cache=False, is_training=True):
+        # If the car is a subject car (self.subject is None), it uses the decide_with_vision method to decide its next action.
+        # It also checks if the result is a lane switch ('L' or 'R') and penalizes if there was recent lane switching.
         if self.subject is None:
             # Subject car uses DeepTrafficPlayer
             q_values, result = self.player.decide_with_vision(
