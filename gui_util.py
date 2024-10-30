@@ -164,13 +164,17 @@ def control_car(target_car, keydown):
 
 
 def identify_free_lane(cars):
+    # Initialize two lists of lanes (1-7), one for each zone
     lanes = [[n for n in range(1, 8)] for _ in range(2)]
+    
     for car in cars:
+        # Check cars in the upper zone (-170 to 0)
         if -170 <= car.y <= 0:
             if car.lane in lanes[0]:
                 lanes[0].remove(car.lane)
             if car.switching_lane in lanes[0]:
                 lanes[0].remove(car.switching_lane)
+        # Check cars in the lower zone (930 to 1070)
         elif 930 <= car.y <= 1070:
             if car.lane in lanes[1]:
                 lanes[1].remove(car.lane)
@@ -178,7 +182,6 @@ def identify_free_lane(cars):
                 lanes[1].remove(car.switching_lane)
 
     return lanes
-
 
 def draw_inputs(surface, vision):
     vision_title = font_28.render("Vision:", False, (0, 0, 0))
