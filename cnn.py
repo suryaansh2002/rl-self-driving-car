@@ -6,6 +6,7 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 from config import VISION_W, VISION_F, VISION_B, ROUND, DL_IS_TRAINING
 import logging
+import random
 
 checkpoint_dir = 'models'
 

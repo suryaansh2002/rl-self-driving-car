@@ -2,12 +2,13 @@ import math
 import pygame
 import os
 import numpy as np
+import logging
 
 from players.player import Player
 from players.aggressive_player import AggresivePlayer
 from players.sticky_player import StickyPlayer
 from players.deep_traffic_player import DeepTrafficPlayer
-
+import torch
 from config import (
     VISION_B,
     VISION_F,
@@ -312,14 +313,29 @@ class Car:
         # Convert speed difference from km/h to m/s
         dvdt = self.speed - self.subject.speed  # Speed difference in km/h
         dmds = dvdt / 3.6  # Convert to m/s (3.6 is conversion factor)
-        
-        # Calculate position adjustments
-        dbdm = 1.0 / 0.25  # Distance per meter
-        dsdf = 1.0 / 50.0  # Scale factor for distance
-        dmdf = dmds * dsdf  # Distance movement factor
-        dbdf = dbdm * dmdf * 10.0  # Final position adjustment
-        
+        # Position adjustment calculations
+        dbdm = 1.0 / 0.25  # = 4 (Distance per meter)
+        # This represents 4 pixels per meter in the game
+        # Higher value = larger position changes
+        # 1/0.25 means each meter is represented by 4 pixels on screen
+
+        dsdf = 1.0 / 50.0  # = 0.02 (Scale factor for distance)
+        # This is a scaling factor to convert speed differences to position changes
+        # Smaller value = smoother movement
+        # 1/50 means speed differences are scaled down by a factor of 50
+
+        # Calculate final position adjustment
+        dmdf = dmds * dsdf  # Scale the speed difference
+        dbdf = dbdm * dmdf * 10.0  # Final pixels to move
+
+        # Example calculation:
+        # If speed difference is 10 km/h:
+        # dmds = 10/3.6 ≈ 2.78 m/s
+        # dmdf = 2.78 * 0.02 ≈ 0.056
+        # dbdf = 4 * 0.056 * 10 ≈ 2.24 pixels per frame        
         # Update y position relative to subject car
+        self.y = self.y - dbdf
+
         self.y = self.y - dbdf
 
         # Update score based on position changes
@@ -327,7 +343,9 @@ class Car:
             self.score.subtract()  # Penalty for getting too close
         elif DEFAULT_CAR_POS - dbdf > self.y >= DEFAULT_CAR_POS:
             self.score.add()      # Reward for maintaining safe distance
-        # self.score.penalty()      # Constant penalty per frame
+
+        # Apply constant penalty per frame
+        # self.score.penalty()
 
     def decide(self, end_episode, cache=False, is_training=True):
         # If the car is a subject car (self.subject is None), it uses the decide_with_vision method to decide its next action.
@@ -341,9 +359,6 @@ class Car:
                 cache=cache,
                 is_training=is_training,
             )
-            print("Q-values: ", q_values, 'Result: ', result)
-            # Check for recent lane switching
-            # Check if the current action is a lane change (Left or Right)
             if result == "L" or result == "R":
                 # Check for "ping-pong" behavior - rapidly switching between lanes
                 if (

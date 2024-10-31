@@ -133,7 +133,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
         # The reverse=True argument sorts the cars in descending order, meaning cars with higher y values (presumably further down the screen) come first in the list.
         cars.sort(key=lambda t_car: t_car.y, reverse=True)
         available_lanes_for_new_car = identify_free_lane(cars)
-        print("Available lanes for new car: ", available_lanes_for_new_car)
+        # print("Available lanes for new car: ", available_lanes_for_new_car)
         # Add more cars to the scene
         
         # is used to create a random 50/50 chance of adding a new car to the scene.
@@ -229,7 +229,9 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             if config.DLAGENTENABLED: # Using DeepTrafficAgent
                 # Get prediction from DeepTrafficAgent
                 q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)
-                print("Q-values: ", q_values, 'Car is subject: ', car.subject)
+                if q_values is not None and np.any(q_values != 0):
+                    print("Q-values: ", q_values, 'Result: ', temp_action)            # Check if the current action is a lane change (Left or Right)
+                    logger.info("Q-values: {}, Result: {}, Score: {}".format(q_values, temp_action, score.score))
                 if not cache:
                     subject_car_action = temp_action
                     q_values = q_values.sum().item()  # Convert PyTorch tensor to Python scalar
@@ -283,7 +285,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
 
         if q_values is not None:
             deep_traffic_agent.model.log_q_values(q_values) # While loop ends here
-            logger.info(f"Episode {episode_count}, Frame {frame}: Q-values: {q_values}")
 
     # Increment episode counter and calculate basic statistics
     episode_count = deep_traffic_agent.model.increase_count_episodes()

@@ -3,6 +3,7 @@ import numpy as np
 from random import choice, uniform
 from collections import deque
 import logging
+import random
 
 from cnn import Cnn
 from config import LEARNING_RATE, EPSILON_GREEDY_START_PROB, EPSILON_GREEDY_END_PROB, EPSILON_GREEDY_MAX_STATES, \
@@ -98,7 +99,7 @@ class DeepTrafficAgent:
         # self.memory.append((self.previous_states,
         #                     next_state,
         #                     self.action,
-        #                     reward - self.score,
+        #                     reward,
         #                     end_episode,
         #                     self.previous_actions,
         #                     next_actions))
@@ -106,7 +107,7 @@ class DeepTrafficAgent:
         self.memory.append((self.previous_states,
                             next_state,
                             self.action,
-                            clipped_reward,
+                            reward,
                             end_episode,
                             self.previous_actions,
                             next_actions))
@@ -126,7 +127,7 @@ class DeepTrafficAgent:
             self.action = 2
             self.score = 0
 
-        self.logger.info(f"Remembering - Reward: {reward - self.score}, End episode: {end_episode}, Memory size: {len(self.memory)}")
+        self.logger.info(f"Remembering - Reward: {reward}, End episode: {end_episode}, Memory size: {len(self.memory)}")
         self.count_states = self.model.increase_count_states()
 
     def optimize(self):
@@ -135,6 +136,13 @@ class DeepTrafficAgent:
 
         states = torch.cat(states).to(self.device)
         next_states = torch.cat(next_states).to(self.device)
+
+        if states.dim() == 5:
+            states = states.squeeze(-1)
+        if next_states.dim() == 5:
+            next_states = next_states.squeeze(-1)
+        
+        
         actions = torch.tensor(actions, dtype=torch.long).to(self.device)
         rewards = torch.tensor(rewards, dtype=torch.float).to(self.device)
         dones = torch.tensor(dones, dtype=torch.float).to(self.device)
@@ -152,6 +160,9 @@ class DeepTrafficAgent:
         self.model.optimizer.step()
 
         self.logger.info(f"Optimizing - Loss: {loss.item()}, Mean Q-value: {current_q_values.mean().item()}")
+        self.logger.info(f"Current Q-values: {current_q_values}")
+        self.logger.info(f"Expected Q-values: {expected_q_values}")
+        self.logger.info(f"Actions: {actions}")
 
         if self.count_states % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
             self.logger.info("Updating target network")
