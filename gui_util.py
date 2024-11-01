@@ -219,12 +219,12 @@ class Score:
         self.score = score
 
     def add(self):
-        self.score += 1
-        # self.score -= 0.1
+        # self.score += 1
+        self.score += 0.01
 
     def subtract(self):
-        self.score -= 1
-        # self.score -= 0.1
+        # self.score -= 1
+        self.score -= 0.01
 
     def penalty(self):
         # Penalty over time

@@ -19,7 +19,9 @@ class DeepTrafficAgent:
         self.num_actions = len(self.action_names)
         self.memory = deque(maxlen=MAX_MEM)
         
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        
         self.model = Cnn(self.model_name, self.memory).to(self.device)
         self.target_model = Cnn(self.model_name, self.memory, target=True).to(self.device)
         self.target_model.load_state_dict(self.model.state_dict())

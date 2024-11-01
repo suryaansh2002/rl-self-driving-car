@@ -336,15 +336,48 @@ class Car:
         # Update y position relative to subject car
         self.y = self.y - dbdf
 
-        # Update score based on position changes
-        if DEFAULT_CAR_POS - dbdf <= self.y < DEFAULT_CAR_POS:
-            self.score.subtract()  # Penalty for getting too close
-        elif DEFAULT_CAR_POS - dbdf > self.y >= DEFAULT_CAR_POS:
-            self.score.add()      # Reward for maintaining safe distance
+        # Define safety zones
+        LONGITUDINAL_DANGER = 50    # y-axis danger zone (pixels)
+        LONGITUDINAL_SAFE = 150     # y-axis safe zone (pixels)
+        LATERAL_DANGER = 25         # x-axis danger zone (pixels)
+        OPTIMAL_FOLLOWING = 100     # optimal following distance
+
+        # Calculate distances
+        y_distance = abs(self.y - DEFAULT_CAR_POS)
+        x_distance = abs(self.x - self.subject.x)
+        relative_speed = abs(dvdt)  # km/h
+
+        # Determine if the current position is safe
+        def is_position_safe(x_dist, y_dist, rel_speed):
+            # Check for dangerous conditions
+            if y_dist < LONGITUDINAL_DANGER:
+                return False  # Too close longitudinally
+            
+            if x_dist < LATERAL_DANGER and y_dist < LONGITUDINAL_SAFE:
+                return False  # Too close laterally and within safety zone
+            
+            if rel_speed > 20 and y_dist < LONGITUDINAL_SAFE:
+                return False  # Approaching too fast
+                
+            # Check for optimal conditions
+            if (OPTIMAL_FOLLOWING - 20 <= y_dist <= OPTIMAL_FOLLOWING + 20 and 
+                x_dist >= LATERAL_DANGER and 
+                rel_speed < 10):
+                return True  # Optimal following distance and safe lateral distance
+            
+            # Default to safe if no dangerous conditions detected
+            return True
+
+        # Apply score based on position safety
+        if is_position_safe(x_distance, y_distance, relative_speed):
+            self.score.add()      # Safe position
+        else:
+            self.score.subtract() # Unsafe position
+
 
         # Apply constant penalty per frame
-        # self.score.penalty()
-
+        self.score.penalty()
+        
     def decide(self, end_episode, cache=False, is_training=True):
         # If the car is a subject car (self.subject is None), it uses the decide_with_vision method to decide its next action.
         # It also checks if the result is a lane switch ('L' or 'R') and penalizes if there was recent lane switching.

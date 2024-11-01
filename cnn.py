@@ -47,7 +47,8 @@ class Cnn(nn.Module):
         self.count_episodes = 0
         self.count_states = 0
         
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         self.to(self.device)
 
         self.writer = SummaryWriter(f"{checkpoint_dir}/{model_name}")
