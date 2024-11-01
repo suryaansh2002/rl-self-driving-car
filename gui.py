@@ -65,7 +65,7 @@ action_stats = np.zeros(5, np.int32)
 PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR  # 60
 
 logging.basicConfig(filename='logs/training_progress.log', level=logging.INFO, 
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    format='%(asctime)s - %(message)s')
 logger = logging.getLogger('DeepTraffic')
 
 # New episode/game round

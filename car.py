@@ -336,8 +336,6 @@ class Car:
         # Update y position relative to subject car
         self.y = self.y - dbdf
 
-        self.y = self.y - dbdf
-
         # Update score based on position changes
         if DEFAULT_CAR_POS - dbdf <= self.y < DEFAULT_CAR_POS:
             self.score.subtract()  # Penalty for getting too close

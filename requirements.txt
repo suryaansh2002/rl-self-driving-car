@@ -2,8 +2,11 @@ absl-py==2.1.0
 astunparse==1.6.3
 certifi==2024.8.30
 charset-normalizer==3.3.2
+contourpy==1.3.0
+cycler==0.12.1
 filelock==3.16.1
 flatbuffers==24.3.25
+fonttools==4.54.1
 fsspec==2024.9.0
 gast==0.6.0
 google-pasta==0.2.0
@@ -12,10 +15,12 @@ h5py==3.11.0
 idna==3.10
 Jinja2==3.1.4
 keras==3.5.0
+kiwisolver==1.4.7
 libclang==18.1.1
 Markdown==3.7
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
+matplotlib==3.9.2
 mdurl==0.1.2
 ml-dtypes==0.4.1
 mpmath==1.3.0
@@ -29,6 +34,8 @@ pillow==10.4.0
 protobuf==4.25.5
 pygame==2.6.0
 Pygments==2.18.0
+pyparsing==3.2.0
+python-dateutil==2.9.0.post0
 requests==2.32.3
 rich==13.8.1
 setuptools==75.1.0
@@ -36,6 +43,7 @@ six==1.16.0
 sympy==1.13.3
 tensorboard==2.17.1
 tensorboard-data-server==0.7.2
+tensorflow==2.17.0
 termcolor==2.4.0
 torch==2.4.1
 torchvision==0.19.1

@@ -58,7 +58,7 @@ class Cnn(nn.Module):
         logger = logging.getLogger(f"Cnn_{self.model_name}")
         logger.setLevel(logging.INFO)
         file_handler = logging.FileHandler(f"logs/{self.model_name}_cnn.log")
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
         return logger
@@ -74,7 +74,7 @@ class Cnn(nn.Module):
         x = torch.cat([x, action_x], dim=1)   # concatenates the flattened convolutional features with the action input along the last dimension (dim=1).
         # for above - This combined vector now has both state features (from convolutional layers) and action features, which the model can use to make a more informed prediction in fc1
         x = torch.relu(self.fc1(x)) # fc1 is a fully connected layer that takes in the concatenated vector and applies a linear transformation, followed by a ReLU activation.
-        self.logger.debug(f"Forward pass - Input state shape: {state.shape}, Action shape: {action.shape}, Output shape: {x.shape}")
+        # self.logger.debug(f"Forward pass - Input state shape: {state.shape}, Action shape: {action.shape}, Output shape: {x.shape}")
         return self.fc2(x)      #  is the output layer that produces num_actions Q-values for the given state-action pair.
 
     def get_q_values(self, states, actions):
@@ -103,8 +103,8 @@ class Cnn(nn.Module):
             'episode': self.count_episodes,
             'iteration': current_iteration,
         }, checkpoint_path)
-        self.logger.info(f"Saved checkpoint at iteration {current_iteration}")
-        print(f"Saved checkpoint to {checkpoint_path}")
+        # self.logger.info(f"Saved checkpoint at iteration {current_iteration}")
+        # print(f"Saved checkpoint to {checkpoint_path}")
 
     def load_checkpoint(self):
         """
@@ -119,7 +119,7 @@ class Cnn(nn.Module):
             self.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.count_episodes = checkpoint['episode']
-            self.logger.info(f"Loaded checkpoint, current episode: {self.count_episodes}")
+            # self.logger.info(f"Loaded checkpoint, current episode: {self.count_episodes}")
             print(f"Restored checkpoint from {checkpoint_path}")
         except FileNotFoundError:
             print("No checkpoint found. Initializing model.")

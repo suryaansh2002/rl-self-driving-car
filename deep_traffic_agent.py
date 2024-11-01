@@ -4,6 +4,9 @@ from random import choice, uniform
 from collections import deque
 import logging
 import random
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import time
 
 from cnn import Cnn
 from config import LEARNING_RATE, EPSILON_GREEDY_START_PROB, EPSILON_GREEDY_END_PROB, EPSILON_GREEDY_MAX_STATES, \
@@ -41,16 +44,65 @@ class DeepTrafficAgent:
 
         self.score = 0
         self.logger = self._setup_logger()
+        self.losses = []
+        self.mean_q_values = []
+        self.step_count = []
+        self.step = 0
+        
+        # Setup live plotting
+        # plt.ion()  # Enable interactive mode
+        # self.setup_plots()
 
     def _setup_logger(self):
         logger = logging.getLogger(f"DeepTrafficAgent_{self.model_name}")
         logger.setLevel(logging.INFO)
         file_handler = logging.FileHandler(f"logs/{self.model_name}_training.log")
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
         return logger
 
+
+    def setup_plots(self):
+        """Initialize the plotting setup"""
+        self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(10, 8))
+        self.fig.suptitle('Training Metrics')
+        
+        # Loss plot
+        self.loss_line, = self.ax1.plot([], [], 'b-', label='Loss')
+        self.ax1.set_xlabel('Episodes')
+        self.ax1.set_ylabel('Loss')
+        self.ax1.set_title('Training Loss')
+        self.ax1.grid(True)
+        self.ax1.legend()
+        
+        # Q-value plot
+        self.q_line, = self.ax2.plot([], [], 'r-', label='Mean Q-value')
+        self.ax2.set_xlabel('Episodes')
+        self.ax2.set_ylabel('Mean Q-value')
+        self.ax2.set_title('Mean Q-values')
+        self.ax2.grid(True)
+        self.ax2.legend()
+        
+        plt.tight_layout()
+    
+    def update_plots(self):
+        """Update the plots with new data"""
+        # Update data
+        self.loss_line.set_data(self.step_count, self.losses)
+        self.q_line.set_data(self.step_count, self.mean_q_values)
+        
+        # Adjust axes limits if needed
+        for ax in [self.ax1, self.ax2]:
+            ax.relim()
+            ax.autoscale_view()
+        
+        # Draw the update
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        
+        # Save the current plot
+        plt.savefig('training_metrics.png')
 
     def get_action_name(self, action):
         return self.action_names[action]
@@ -76,7 +128,7 @@ class DeepTrafficAgent:
 
         self.q_values = q_values.squeeze().cpu().numpy()
         self.action = action
-        self.logger.info(f"State shape: {self.previous_states.shape}, Action: {self.get_action_name(action)}, Q-values: {self.q_values}")
+        # self.logger.info(f"State shape: {self.previous_states.shape}, Action: {self.get_action_name(action)}, Q-values: {self.q_values}")
         return self.q_values, self.get_action_name(action)
 
 
@@ -127,7 +179,7 @@ class DeepTrafficAgent:
             self.action = 2
             self.score = 0
 
-        self.logger.info(f"Remembering - Reward: {reward}, End episode: {end_episode}, Memory size: {len(self.memory)}")
+        self.logger.info(f"Remembering - Reward: {reward}, Memory size: {len(self.memory)}")
         self.count_states = self.model.increase_count_states()
 
     def optimize(self):
@@ -159,16 +211,24 @@ class DeepTrafficAgent:
         loss.backward()
         self.model.optimizer.step()
 
-        self.logger.info(f"Optimizing - Loss: {loss.item()}, Mean Q-value: {current_q_values.mean().item()}")
-        self.logger.info(f"Current Q-values: {current_q_values}")
-        self.logger.info(f"Expected Q-values: {expected_q_values}")
-        self.logger.info(f"Actions: {actions}")
 
         if self.count_states % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
-            self.logger.info("Updating target network")
+            # self.logger.info("Updating target network")
             self.target_model.load_state_dict(self.model.state_dict())
             self.model.save_checkpoint(self.count_states)
-            print("Target network updated")
+            # print("Target network updated")
+        
+        self.step += 1
+        self.losses.append(loss.item())
+        self.mean_q_values.append(current_q_values.mean().item())
+        self.step_count.append(self.model.get_count_episodes())
+        
+        # Log metrics
+        self.logger.info(f"Optimizing - Loss: {loss.item()}, Mean Q-value: {current_q_values.mean().item()}")
+        
+        # # Update plots every N steps (adjust N as needed)
+        # if self.step % 10 == 0:  # Update every 10 steps
+        #     self.update_plots()
 
 
         self.model.log_training_loss(loss.item())
