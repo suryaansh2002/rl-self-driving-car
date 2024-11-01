@@ -47,7 +47,7 @@ if config.VISUALENABLED:
     # sets up main display surface with resolution of 1600x800 pixels. flags use are:
     # pygame.DOUBLEBUF - Uses double buffering to help with smooth animations
     # pygame.HWSURFACE: Uses hardware acceleration if available. Using pygame.HWSURFACE is a way to leverage the GPU for better performance in rendering graphics. 
-    main_surface = pygame.display.set_mode((1600, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
+    main_surface = pygame.display.set_mode((700, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
     advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
 else:
     os.environ["SDL_VIDEODRIVER"] = "dummy"     # Run without opening window(during testing for eg.)
@@ -122,6 +122,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
 
+        advanced_road.draw(frame, subject_car)
 
         # Setup game background
         draw_basic_road(main_surface, subject_car.speed)
@@ -273,7 +274,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             draw_gauge(main_surface, subject_car.speed)
 
             # Setup advanced view
-            advanced_road.draw(frame, subject_car)
 
             # collision detection
             fpsClock.tick(20000)
