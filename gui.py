@@ -284,9 +284,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
     if not is_training:
         # Testing mode: collect statistics for later analysis
         speed_counter_avg.append(avg_speed)
-    else:
-        # Training mode: print immediate feedback
-        print("Average speed for episode{}: {}".format(episode_count, avg_speed))
 
 
     # Post-training analysis (after MAX_EPISODE is reached)
