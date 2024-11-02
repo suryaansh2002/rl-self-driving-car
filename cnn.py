@@ -6,6 +6,7 @@ import numpy as np
 from config import VISION_W, VISION_F, VISION_B, ROUND, DL_IS_TRAINING
 import logging
 import random
+from logging_config import setup_logger
 
 checkpoint_dir = 'models'
 
@@ -41,7 +42,6 @@ class Cnn(nn.Module):
         self.fc2 = nn.Linear(100, num_actions)      # 100 is chosen to balance between model expressiveness and computational efficiency.
         
         self.optimizer = optim.Adam(self.parameters(), lr=1e-3) # lr = 0.001
-        self.loss_fn = nn.MSELoss() # minimize diff b/w predicted Q values and target Q values
         
         self.count_episodes = 0
         self.count_states = 0
@@ -50,17 +50,10 @@ class Cnn(nn.Module):
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         self.to(self.device)
 
-        self.logger = self._setup_logger()
+        self.logger = setup_logger(f"CNN_{self.model_name}", 
+                       ['logs/cnn_training.log'])
         self.load_checkpoint()
 
-    def _setup_logger(self):
-        logger = logging.getLogger(f"Cnn_{self.model_name}")
-        logger.setLevel(logging.INFO)
-        file_handler = logging.FileHandler(f"logs/{self.model_name}_cnn.log")
-        formatter = logging.Formatter('%(asctime)s - %(message)s')
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-        return logger
 
     def forward(self, state, action):
         #  This is the current observation (e.g., an image or sensor data) with shape (batch_size, 1, height, width)
@@ -94,14 +87,14 @@ class Cnn(nn.Module):
         # Ensures that checkpoints are only saved if the model is the main network (as opposed to a target network used for stabilizing training).
         if not self.main or not DL_IS_TRAINING:
             return False
-        checkpoint_path = os.path.join(checkpoint_dir, self.model_name, f"checkpoint.pth")
+        checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint.pth")
         torch.save({
             'model_state_dict': self.state_dict(),  # Stores the model’s parameters. self.state_dict() returns a dictionary of all model parameters, which can be used to restore the model later
             'optimizer_state_dict': self.optimizer.state_dict(),    # Stores the state of the optimizer, including parameter values, gradients, and momentum, allowing the optimizer to resume from where it left off.
             'episode': self.count_episodes,
             'iteration': current_iteration,
         }, checkpoint_path)
-        # self.logger.info(f"Saved checkpoint at iteration {current_iteration}")
+        self.logger.info(f"Saved checkpoint at iteration {current_iteration}")
         # print(f"Saved checkpoint to {checkpoint_path}")
 
     def load_checkpoint(self):
@@ -111,12 +104,12 @@ class Cnn(nn.Module):
         from that point. If no checkpoint is found, it defaults to initializing the model from scratch.
         """
         try:
-            checkpoint_path = os.path.join(checkpoint_dir, self.model_name, "checkpoint.pth")
+            checkpoint_path = os.path.join(checkpoint_dir, "checkpoint.pth")
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
             self.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.count_episodes = checkpoint['episode']
-            # self.logger.info(f"Loaded checkpoint, current episode: {self.count_episodes}")
+            self.logger.info(f"Loaded checkpoint, current episode: {self.count_episodes}")
             print(f"Restored checkpoint from {checkpoint_path}")
         except FileNotFoundError:
             print("No checkpoint found. Initializing model.")
@@ -134,21 +127,6 @@ class Cnn(nn.Module):
     def increase_count_states(self):
         self.count_states += 1
         return self.count_states
-
-    def optimize(self, memory, batch_size=128, learning_rate=1e-3, target_network=None):
-        states, targets, actions = self.get_memory_component(memory, batch_size, target_network)
-        
-        states = torch.FloatTensor(states).to(self.device)
-        targets = torch.FloatTensor(targets).to(self.device)
-        actions = torch.FloatTensor(actions).to(self.device)
-
-        self.optimizer.zero_grad()
-        q_values = self(states, actions)
-        loss = self.loss_fn(q_values, targets)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
-
-        self.optimizer.step()
 
 
     def get_memory_component(self, memory, batch_size, target_network=None):

@@ -26,10 +26,12 @@ from deep_traffic_agent import DeepTrafficAgent
 from advanced_view.road import AdvancedRoad
 
 import config
+from logging_config import setup_logger
 
 # Model name
 model_name = config.MODEL_NAME
 
+logger = setup_logger('GUI', ['logs/gui.log'])
 deep_traffic_agent = DeepTrafficAgent(model_name)
 
 # Define game constant
@@ -64,9 +66,6 @@ action_stats = np.zeros(5, np.int32)
 
 PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR  # 60
 
-logging.basicConfig(filename='logs/training_progress.log', level=logging.INFO, 
-                    format='%(asctime)s - %(message)s')
-logger = logging.getLogger('DeepTraffic')
 
 # New episode/game round
 while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 2000 + 200*3
@@ -113,11 +112,11 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
 
-        advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
+            advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
         
 
-        # Setup game background
-        draw_basic_road(main_surface, subject_car.speed)
+            # Setup game background
+            draw_basic_road(main_surface, subject_car.speed)
 
         # Car to identify available moves in the order from top to bottom
         cars = [subject_car]
@@ -221,8 +220,8 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             if config.DLAGENTENABLED: # Using DeepTrafficAgent
                 # Get prediction from DeepTrafficAgent
                 q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)
-                if q_values is not None and np.any(q_values != 0):
-                    logger.info("Q-values: {}, Result: {}, Score: {}".format(q_values, temp_action, score.score))
+                # if q_values is not None and np.any(q_values != 0):
+                #     logger.info("Q-values: {}, Result: {}, Score: {}".format(q_values, temp_action, score.score))
                 if not cache:
                     subject_car_action = temp_action
                     q_values = q_values.sum().item()  # Convert PyTorch tensor to Python scalar

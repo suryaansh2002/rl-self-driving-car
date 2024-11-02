@@ -5,7 +5,6 @@ import numpy as np
 class DeepTrafficPlayer(Player):
     def decide_with_vision(self, vision, score, end_episode, cache=False, is_training=True):
         # if cache:
-        #     print("Cache is true")
         #     self.car.move(self.action_cache)
         #     return None, None
 
