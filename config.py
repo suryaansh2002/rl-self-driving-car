@@ -14,14 +14,14 @@ VISUAL_VISION_B = 7  # less than 30
 
 
 # When Training
-VISUALENABLED = False 
-DLAGENTENABLED = True
-DL_IS_TRAINING = True
+# VISUALENABLED = False 
+# DLAGENTENABLED = True
+# DL_IS_TRAINING = True
 
 # # When not training
-# VISUALENABLED = True 
-# DLAGENTENABLED = True  # Make False to simulate manually
-# DL_IS_TRAINING = False  
+VISUALENABLED = True 
+DLAGENTENABLED = False  # Make False to simulate manually
+DL_IS_TRAINING = False  
 
 MAX_SIMULATION_CAR = 60
 

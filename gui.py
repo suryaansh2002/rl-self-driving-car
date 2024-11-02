@@ -112,7 +112,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
 
-        advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
+            advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
         
 
             # Setup game background
