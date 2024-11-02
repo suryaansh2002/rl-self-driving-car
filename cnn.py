@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 import os
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
 from config import VISION_W, VISION_F, VISION_B, ROUND, DL_IS_TRAINING
 import logging
 import random
@@ -51,7 +50,6 @@ class Cnn(nn.Module):
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         self.to(self.device)
 
-        self.writer = SummaryWriter(f"{checkpoint_dir}/{model_name}")
         self.logger = self._setup_logger()
         self.load_checkpoint()
 
@@ -97,7 +95,6 @@ class Cnn(nn.Module):
         if not self.main or not DL_IS_TRAINING:
             return False
         checkpoint_path = os.path.join(checkpoint_dir, self.model_name, f"checkpoint.pth")
-        print("Checkpoint path: ", checkpoint_path)
         torch.save({
             'model_state_dict': self.state_dict(),  # Stores the model’s parameters. self.state_dict() returns a dictionary of all model parameters, which can be used to restore the model later
             'optimizer_state_dict': self.optimizer.state_dict(),    # Stores the state of the optimizer, including parameter values, gradients, and momentum, allowing the optimizer to resume from where it left off.
@@ -115,7 +112,6 @@ class Cnn(nn.Module):
         """
         try:
             checkpoint_path = os.path.join(checkpoint_dir, self.model_name, "checkpoint.pth")
-            print("Checkpoint path: ", checkpoint_path)
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
             self.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
