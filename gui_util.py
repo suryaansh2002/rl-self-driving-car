@@ -109,22 +109,22 @@ def draw_basic_road(surface, speed):
     # Right most lane marking
     pygame.draw.line(surface, black, (ROAD_VIEW_OFFSET + 367, -10), (ROAD_VIEW_OFFSET + 367, 1000), 5)
 
-    # line_marking_offset = randint(0, 10)    # A random offset (line_marking_offset) is generated to add some variation to the position of the dashed lines
-    # for l in range(1, 7):
-    #     draw_dashed_line(
-    #         surface,
-    #         grey,
-    #         # Horizontal Positioning - ROAD_VIEW_OFFSET + l * 50 + 15, Vertical Offset Based on Speed - int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)
-    #         # speed / (MAX_SPEED * 1.0) calculates a ratio of the current speed to the maximum speed. 
-    #         # If the car is going at maximum speed, this ratio will be 1 (or close to it). If it's stationary, the ratio will be 0.
-    #         # This ratio is multiplied by -1 and line_marking_offset, which gives a negative vertical offset. The reason for the negative sign is likely to move 
-    #         # the dashed lines up on the screen as the speed increases, creating the effect that they are moving down relative to the car.
-    #         # At higher speeds, it looks like the dashed lines are passing by more quickly, while at lower speeds, they appear to move more slowly
-    #         (ROAD_VIEW_OFFSET + l * 50 + 15, int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)),
-    #         (ROAD_VIEW_OFFSET + l * 50 + 15, 1000),
-    #         width=1,
-    #         dash_length=5
-    #     )
+    line_marking_offset = randint(0, 10)    # A random offset (line_marking_offset) is generated to add some variation to the position of the dashed lines
+    for l in range(1, 7):
+        draw_dashed_line(
+            surface,
+            grey,
+            # Horizontal Positioning - ROAD_VIEW_OFFSET + l * 50 + 15, Vertical Offset Based on Speed - int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)
+            # speed / (MAX_SPEED * 1.0) calculates a ratio of the current speed to the maximum speed. 
+            # If the car is going at maximum speed, this ratio will be 1 (or close to it). If it's stationary, the ratio will be 0.
+            # This ratio is multiplied by -1 and line_marking_offset, which gives a negative vertical offset. The reason for the negative sign is likely to move 
+            # the dashed lines up on the screen as the speed increases, creating the effect that they are moving down relative to the car.
+            # At higher speeds, it looks like the dashed lines are passing by more quickly, while at lower speeds, they appear to move more slowly
+            (ROAD_VIEW_OFFSET + l * 50 + 15, int((speed/(MAX_SPEED * 1.0)) * -1 * line_marking_offset)),
+            (ROAD_VIEW_OFFSET + l * 50 + 15, 1000),
+            width=1,
+            dash_length=5
+        )
 
 
 def draw_road_overlay_safety(surface, lane_map):
@@ -230,7 +230,7 @@ class Score:
 
     def subtract(self):
         # self.score -= 1
-        self.score -= 0.01
+        self.score -= 0.02
 
     def penalty(self):
         # Penalty over time

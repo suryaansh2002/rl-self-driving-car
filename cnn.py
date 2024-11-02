@@ -73,8 +73,8 @@ class Cnn(nn.Module):
         """
         Obtain the Q-values for a given batch of states and actions without updating the model’s parameters
         """
-        states = torch.FloatTensor(states).to(self.device)
-        actions = torch.FloatTensor(actions).to(self.device)
+        # states = torch.FloatTensor(states).to(self.device)
+        # actions = torch.FloatTensor(actions).to(self.device)
         with torch.no_grad():
             # This function takes states and actions, converts them to tensors on the correct device, performs a forward pass to get the Q-values, and then returns these Q-values as a NumPy array.
             return self(states, actions).cpu().numpy()  # self(states, actions) calls the model’s forward method to calculate the Q-values for the provided states and actions.

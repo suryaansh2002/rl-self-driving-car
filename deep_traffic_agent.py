@@ -130,7 +130,7 @@ class DeepTrafficAgent:
             1, 1, VISION_F + VISION_B + 1, VISION_W * 2 + 1
         )
         self.previous_actions = torch.zeros(1, 4).to(self.device)
-
+        
         # Exploration
         if is_training and np.random.rand() <= self.epsilon_linear.get_value(
             self.count_states
@@ -140,10 +140,10 @@ class DeepTrafficAgent:
         # Exploitation
         else:
             with torch.no_grad():
-                q_values = self.model(self.previous_states, self.previous_actions)
+                q_values = self.model.get_q_values(self.previous_states, self.previous_actions)
             action = q_values.argmax().item()
 
-        self.q_values = q_values.squeeze().cpu().numpy()
+        self.q_values = q_values
         self.action = action
         return self.q_values, self.get_action_name(action)
 
@@ -211,7 +211,7 @@ class DeepTrafficAgent:
 
         # Log with episode and state information
         self.logger.info(
-            f"Remembering - Episode: {episode_count}, State: {state_count+4000/(episode_count+1)}, Reward: {reward}"
+            f"In Remember: - Episode: {episode_count}, State: {state_count}, Reward: {reward}"
         )
         self.count_states = self.model.increase_count_states()
 
@@ -235,7 +235,8 @@ class DeepTrafficAgent:
         prev_actions = torch.cat(prev_actions).to(self.device)
         next_actions = torch.cat(next_actions).to(self.device)
 
-        current_q_values = self.model(states, prev_actions).gather(
+        current_q_values = self.model(states, prev_actions)
+        current_q_values = current_q_values.gather(
             1, actions.unsqueeze(1)
         )
         next_q_values = self.target_model(next_states, next_actions).max(1)[0].detach()
@@ -250,7 +251,6 @@ class DeepTrafficAgent:
         self.model.optimizer.step()
 
         if self.count_states % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
-            # self.logger.info("Updating target network")
             self.target_model.load_state_dict(self.model.state_dict())
             self.model.save_checkpoint(self.count_states)
 
@@ -258,15 +258,17 @@ class DeepTrafficAgent:
         self.losses.append(loss.item())
         self.mean_q_values.append(current_q_values.mean().item())
         self.step_count.append(self.model.get_count_episodes())
+        episode_count = self.model.get_count_episodes()
+        state_count = self.model.get_count_states()
 
         # Log metrics
         self.logger.info(
-            f"Optimization step {self.step} - "
+            f"In Optimize: Step: {self.step} - "
+            f"Episode: {episode_count}, State: {state_count}, "
             f"Loss: {loss.item():.4f}, "
-            f"Mean Q-value: {current_q_values.mean().item():.4f}, "
-            f"Epsilon: {self.epsilon_linear.get_value(self.count_states):.4f}, "
-            f"Memory size: {len(self.memory)}"
-        )
+            f"Mean Q-value: {current_q_values.mean().item():.4f} ,"
+            f"Mean Rewards: {rewards.mean().mean().item():.4f} ,"
+            )
 
 
 class LinearControlSignal:

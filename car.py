@@ -140,6 +140,8 @@ class Car:
             self.speed = self.max_speed
         else:
             self.speed -= 1.0 if self.speed > 0 else 0.0
+            if(self.speed < 5):
+                self.score.subtract()
 
 
     def check_switch_lane(self):
