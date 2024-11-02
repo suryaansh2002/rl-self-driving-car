@@ -261,7 +261,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             draw_inputs(main_surface, subject_car.get_vision())
             draw_actions(main_surface, subject_car_action)
             draw_gauge(main_surface, subject_car.speed)
-            fpsClock.tick(1000)
+            fpsClock.tick(20000)
             pygame.event.poll()
             pygame.display.flip()
 

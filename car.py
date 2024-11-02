@@ -74,9 +74,6 @@ class Car:
         self.switching_lane = -1
         self.available_directions = ["M"]
         self.available_moves = ["D"]
-        self.target_lane = lane  # Add this: target lane for smooth transitions
-        self.lane_change_progress = 0  # Add this: for smooth animation
-        self.lane_change_speed = 0.2  # Add this: control transition speed (adjust as needed)
 
         self.score = score
 
