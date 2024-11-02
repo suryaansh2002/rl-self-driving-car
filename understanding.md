@@ -89,16 +89,9 @@ The `DeepTrafficAgent` implements a Deep Q-Network (DQN) with:
 - `save_checkpoint`: Saves the model's state to a file.
 - `load_checkpoint`: Loads the model's state from a file.
 
-### 8. Logging Methods:
-- Methods like `log_average_speed` and `log_training_loss` for logging metrics during training.
-- Uses TensorFlow's summary writing for visualization in TensorBoard.
-
-### 9. Utility Methods:
+### 8. Utility Methods:
 - Methods for incrementing episode and state counters.
 - Methods for accessing model weights and variables.
-
-### 10. Histogram Logging (`log_histogram` method):
-- Logs histograms of values, useful for visualizing weight distributions.
 
 **Summary**:  
 The `CNN` class defines the neural network architecture, handles training, manages checkpoints, and provides logging capabilities. It's designed for use within a reinforcement learning framework (DQN).

@@ -218,7 +218,6 @@ class DeepTrafficAgent:
             # self.logger.info("Updating target network")
             self.target_model.load_state_dict(self.model.state_dict())
             self.model.save_checkpoint(self.count_states)
-            # print("Target network updated")
         
         self.step += 1
         self.losses.append(loss.item())
@@ -227,13 +226,8 @@ class DeepTrafficAgent:
         
         # Log metrics
         self.logger.info(f"Optimizing - Loss: {loss.item()}, Mean Q-value: {current_q_values.mean().item()}")
-        
-        # # Update plots every N steps (adjust N as needed)
-        # if self.step % 10 == 0:  # Update every 10 steps
-        #     self.update_plots()
 
 
-        self.model.log_training_loss(loss.item())
 
 class LinearControlSignal:
     def __init__(self, start_value, end_value, repeat=False):

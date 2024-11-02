@@ -154,7 +154,6 @@ class Cnn(nn.Module):
 
         self.optimizer.step()
 
-        self.log_training_loss(loss.item())
 
     def get_memory_component(self, memory, batch_size, target_network=None):
         minibatch = random.sample(memory, batch_size)
@@ -177,51 +176,6 @@ class Cnn(nn.Module):
         targets = np.array(targets).reshape(-1, 5)
         actions = np.array(actions)
         return states, targets, actions
-
-    def log_training_loss(self, loss):
-        self.writer.add_scalar('Loss/train', loss, self.count_episodes)
-
-    def log_q_values(self, q_values):
-        self.writer.add_scalar('Q_values/sum', np.sum(q_values), self.count_states)
-
-    def log_average_speed(self, speed):
-        self.writer.add_scalar('Speed/average', speed, self.count_episodes)
-
-    def log_testing_speed(self, speed):
-        self.writer.add_scalar('Speed/test', speed, self.count_episodes)
-
-    def log_total_frame(self, frame):
-        self.writer.add_scalar('Frames/total', frame, self.count_episodes)
-
-    def log_terminated(self, terminated):
-        self.writer.add_scalar('Episode/terminated', int(terminated), self.count_episodes)
-
-    def log_reward(self, reward):
-        self.writer.add_scalar('Reward/episode', reward, self.count_episodes)
-
-    def log_hard_brake_count(self, count):
-        self.writer.add_scalar('Actions/hard_brake_count', count, self.count_states)
-
-    def log_average_test_speed_40(self, speed):
-        self.writer.add_scalar('Speed/test_average_40', speed, self.count_episodes)
-
-    def log_average_test_speed_20(self, speed):
-        self.writer.add_scalar('Speed/test_average_20', speed, self.count_episodes)
-
-    def log_average_test_speed_60(self, speed):
-        self.writer.add_scalar('Speed/test_average_60', speed, self.count_episodes)
-
-    def log_action_frequency(self, action_stats):
-        print(f"Action frequency: {action_stats}")
-        for i, freq in enumerate(action_stats):
-            self.writer.add_scalar(f'Actions/frequency_{i}', freq, self.count_episodes)
-
-    def log_histogram(self, tag, values, step, bins=1000):
-        self.writer.add_histogram(tag, values, step, bins=bins)
-
-    def close(self):
-        self.writer.close()
-
 
 # Deep Q-Learning (DQN), the use of a main network and a target network is a technique introduced to stabilize training.
 # The main network (or policy network) is the model actively learning from experiences and making action decisions.

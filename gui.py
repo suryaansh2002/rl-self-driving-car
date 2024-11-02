@@ -102,15 +102,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
     subject_car_action = 'M'
 
     while True: # frame < config.MAX_FRAME_COUNT:
-        if config.VISUALENABLED and not config.DLAGENTENABLED: # Show GUI and manual control
-            pressed_key = pygame.key.get_pressed()
-            keydown_key = []
-
-        # Alternate for lines 105 to 123 is below(124-133)
-        # if config.VISUALENABLED and not config.DLAGENTENABLED:      # True and not False
-        #     pressed_key = pygame.key.get_pressed()  # returns a list representing the state of every key on the keyboard. Each element in the list is 1 if the corresponding key is currently being held down, and 0 otherwise.
-        #     keydown_key = []
-
         if config.VISUALENABLED: # Show GUI, playing using DeepTrafficAgent
             pressed_key = pygame.key.get_pressed()
             keydown_key = []
@@ -122,7 +113,8 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
 
-        advanced_road.draw(frame, subject_car)
+        advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
+        
 
         # Setup game background
         draw_basic_road(main_surface, subject_car.speed)
@@ -134,7 +126,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
         # The reverse=True argument sorts the cars in descending order, meaning cars with higher y values (presumably further down the screen) come first in the list.
         cars.sort(key=lambda t_car: t_car.y, reverse=True)
         available_lanes_for_new_car = identify_free_lane(cars)
-        # print("Available lanes for new car: ", available_lanes_for_new_car)
         # Add more cars to the scene
         
         # is used to create a random 50/50 chance of adding a new car to the scene.
@@ -231,7 +222,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 # Get prediction from DeepTrafficAgent
                 q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)
                 if q_values is not None and np.any(q_values != 0):
-                    print("Q-values: ", q_values, 'Result: ', temp_action)            # Check if the current action is a lane change (Left or Right)
                     logger.info("Q-values: {}, Result: {}, Score: {}".format(q_values, temp_action, score.score))
                 if not cache:
                     subject_car_action = temp_action
@@ -283,9 +273,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
         frame += 1
         speed_counter.append(subject_car.speed)
 
-        if q_values is not None:
-            deep_traffic_agent.model.log_q_values(q_values) # While loop ends here
-
     # Increment episode counter and calculate basic statistics
     episode_count = deep_traffic_agent.model.increase_count_episodes()
     avg_speed = np.average(speed_counter)
@@ -297,20 +284,10 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
     if not is_training:
         # Testing mode: collect statistics for later analysis
         speed_counter_avg.append(avg_speed)
-        deep_traffic_agent.model.log_testing_speed(avg_speed)
     else:
         # Training mode: print immediate feedback
         print("Average speed for episode{}: {}".format(episode_count, avg_speed))
-        deep_traffic_agent.model.log_average_speed(avg_speed)
 
-    # Log general episode statistics
-    deep_traffic_agent.model.log_total_frame(frame)
-    # Log if episode terminated early (before MAX_FRAME_COUNT)
-    deep_traffic_agent.model.log_terminated(frame < config.MAX_FRAME_COUNT - 1)
-    # Log final reward score
-    deep_traffic_agent.model.log_reward(score.score)
-    # Log emergency braking incidents
-    deep_traffic_agent.model.log_hard_brake_count(subject_car.hard_brake_count)
 
     # Post-training analysis (after MAX_EPISODE is reached)
     if episode_count > config.MAX_EPISODE:
@@ -337,19 +314,13 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             # Changes PREDEFINED_MAX_CAR between 20, 40, and 60 cars
             if abs(PREDEFINED_MAX_CAR - 40) < 1:
                 # Testing with 40 cars
-                deep_traffic_agent.model.log_average_test_speed_40(avg_speed)
                 PREDEFINED_MAX_CAR = 20  # Switch to testing with 20 cars
             elif abs(PREDEFINED_MAX_CAR - 20) < 1:
                 # Testing with 20 cars
-                deep_traffic_agent.model.log_average_test_speed_20(avg_speed)
                 PREDEFINED_MAX_CAR = 60  # Switch to testing with 60 cars
-            else:
-                # Testing with 60 cars
-                deep_traffic_agent.model.log_average_test_speed_60(avg_speed)
                 
             # Reset statistics collectors for next testing batch
             speed_counter_avg = []
             hard_brake_avg = []
             alternate_line_switching = []
-deep_traffic_agent.model.log_action_frequency(action_stats)
 logger.info(f"Training completed. Total episodes: {episode_count}, Action frequencies: {action_stats}")
