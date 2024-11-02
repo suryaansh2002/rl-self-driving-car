@@ -112,11 +112,11 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
 
-            advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
+        advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
         
 
             # Setup game background
-            draw_basic_road(main_surface, subject_car.speed)
+        draw_basic_road(main_surface, subject_car.speed)
 
         # Car to identify available moves in the order from top to bottom
         cars = [subject_car]
@@ -261,11 +261,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             draw_inputs(main_surface, subject_car.get_vision())
             draw_actions(main_surface, subject_car_action)
             draw_gauge(main_surface, subject_car.speed)
-
-            # Setup advanced view
-
-            # collision detection
-            fpsClock.tick(20000)
+            fpsClock.tick(1000)
             pygame.event.poll()
             pygame.display.flip()
 
