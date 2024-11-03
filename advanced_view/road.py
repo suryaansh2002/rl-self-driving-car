@@ -55,11 +55,12 @@ class AdvancedRoad:
         self.object_car_right_image = pygame.image.load(os.path.join('./advanced_view/images/civic_right.png'))
 
         self.road_view = None
+        self.visible = True  # Add this line
+
 
     def draw(self, frame, subject_car):
         lane = subject_car.lane
         while True:
-            # continue
             self.draw_sky(frame)
             self.draw_road_side(frame, self.lane)
             self.draw_road(frame, lane=self.lane)
@@ -67,12 +68,13 @@ class AdvancedRoad:
             self.draw_subject_car(self.lane - lane)
             if self.lane != lane:
                 self.lane += 0.25 if lane > self.lane else - 0.25
-            pygame.draw.rect(self.surface, COLOR['white'], (0, 0, self.surface.get_width(), self.surface.get_height()))
-            
+            pygame.draw.rect(self.surface, COLOR['white'], (0, 0, 1010, self.surface.get_height()))
+
             if abs(self.lane - lane) < 0.1:
                 break
             pygame.event.poll()
             pygame.display.flip()
+
         self.lane = lane
 
     def draw_sky(self, frame):

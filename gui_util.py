@@ -153,7 +153,7 @@ def draw_road_overlay_vision(surface, subject_car):
     for y in range(min_y, max_y + 1):
         for x in range(min_x, max_x + 1):
             pygame.draw.rect(surface, green, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10))
-            pygame.draw.rect(surface, grey, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10), 1)
+            # pygame.draw.rect(surface, grey, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10), 1)
 
 
 def control_car(target_car, keydown):
@@ -208,8 +208,6 @@ def draw_actions(surface, action):
     surface.blit(action_title, (INPUT_VIEW_OFFSET_X - 10, INPUT_VIEW_OFFSET_Y + 370))
     surface.blit(action_text, (INPUT_VIEW_OFFSET_X + 90, INPUT_VIEW_OFFSET_Y + 370))
     
-    # surface.blit(action_title, (INPUT_VIEW_OFFSET_X - 10, INPUT_VIEW_OFFSET_Y + 370))
-
     # surface.blit(left_on if action == 'L' else left_off,
     #              (INPUT_VIEW_OFFSET_X + 80, INPUT_VIEW_OFFSET_Y + 370, 34, 70))
     # surface.blit(right_on if action == 'R' else right_off,
@@ -247,21 +245,16 @@ class Score:
 
 
 def draw_gauge(surface, speed):
-    # Remove the existing gauge drawing code
-    # im = Image.new("RGB", (200, 200), (255, 255, 255, 0))
+    im = Image.new("RGB", (200, 200), (255, 255, 255, 0))
     # g = GaugeDraw(im, 0, 110)
     # g.render_simple_gauge(value=speed, major_ticks=10, minor_ticks=5, label="{}kmh".format(speed))
 
     # gauge = pygame.image.fromstring(im.tobytes(), im.size, im.mode)
-
-    # Draw the speed as an integer number
     speed_title = font_28.render("Speed:", False, (0, 0, 0))
     speed_value = font_60.render(str(int(speed)), False, (0, 0, 0))
     surface.blit(speed_title, (INPUT_VIEW_OFFSET_X - 10, 10))
     surface.blit(speed_value, (INPUT_VIEW_OFFSET_X - 10 + 80, 35))
-    # surface.blit(speed_title, (INPUT_VIEW_OFFSET_X - 10, 10))
-    # surface.blit(gauge, ((INPUT_VIEW_OFFSET_X - 10, 35), (200, 200)))
-
+    
 
 def draw_score(surface, score):
     score_title = font_28.render("Score:", False, (0, 0, 0))

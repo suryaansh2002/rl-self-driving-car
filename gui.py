@@ -50,7 +50,12 @@ if config.VISUALENABLED:
     # pygame.DOUBLEBUF - Uses double buffering to help with smooth animations
     # pygame.HWSURFACE: Uses hardware acceleration if available. Using pygame.HWSURFACE is a way to leverage the GPU for better performance in rendering graphics. 
     main_surface = pygame.display.set_mode((700, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
+    background_layer = pygame.Surface((700, 800), pygame.SRCALPHA)  # For road
+    car_layer = pygame.Surface((700, 800), pygame.SRCALPHA)        # For cars
+    advanced_layer = pygame.Surface((700, 800), pygame.SRCALPHA)   # For advanced view
+
     advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
+  
 else:
     os.environ["SDL_VIDEODRIVER"] = "dummy"     # Run without opening window(during testing for eg.)
     main_surface = None
@@ -84,7 +89,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                       agent=deep_traffic_agent)
     object_cars = [Car(main_surface,
                        lane_map,
-                       speed=60,
+                       speed=40,
                        y=800,           # means wat?
                        lane=6,          # means ?
                        is_subject=False,
@@ -112,8 +117,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
 
-            advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
-        
 
             # Setup game background
         draw_basic_road(main_surface, subject_car.speed)
@@ -261,9 +264,16 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             draw_inputs(main_surface, subject_car.get_vision())
             draw_actions(main_surface, subject_car_action)
             draw_gauge(main_surface, subject_car.speed)
+
+
+            # collision detection
             fpsClock.tick(20000)
             pygame.event.poll()
             pygame.display.flip()
+            main_surface.blit(background_layer, (0, 0))  # Bottom layer
+            main_surface.blit(advanced_layer, (0, 0))   # Advanced view layer
+            main_surface.blit(car_layer, (0, 0))        # Middle layer
+
 
         frame += 1
         speed_counter.append(subject_car.speed)
