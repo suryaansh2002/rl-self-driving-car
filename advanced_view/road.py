@@ -55,7 +55,6 @@ class AdvancedRoad:
         self.object_car_right_image = pygame.image.load(os.path.join('./advanced_view/images/civic_right.png'))
 
         self.road_view = None
-        self.visible = True  # Add this line
 
 
     def draw(self, frame, subject_car):

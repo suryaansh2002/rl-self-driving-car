@@ -245,7 +245,7 @@ class Score:
 
 
 def draw_gauge(surface, speed):
-    im = Image.new("RGB", (200, 200), (255, 255, 255, 0))
+    # im = Image.new("RGB", (200, 200), (255, 255, 255, 0))
     # g = GaugeDraw(im, 0, 110)
     # g.render_simple_gauge(value=speed, major_ticks=10, minor_ticks=5, label="{}kmh".format(speed))
 
