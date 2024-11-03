@@ -1,11 +1,8 @@
-# Deep Traffic
 import os
-# Import required packages
 import pygame
 import sys
 from pygame.locals import *
 import numpy as np
-import torch  # Add this import
 
 # Import model and GUI related modules
 from car import Car, DEFAULT_CAR_POS
@@ -20,15 +17,12 @@ from gui_util import draw_basic_road, \
     draw_gauge, \
     draw_score
 from deep_traffic_agent import DeepTrafficAgent
-
-# Advanced view
-from advanced_view.road import AdvancedRoad
-
 import config
+from logging_config import setup_logger
 
 # Model name
 model_name = config.MODEL_NAME
-
+logger = setup_logger('GUI', ['logs/gui.log'])
 deep_traffic_agent = DeepTrafficAgent(model_name)
 
 # Define game constant
@@ -47,7 +41,6 @@ if config.VISUALENABLED:
     # pygame.DOUBLEBUF - Uses double buffering to help with smooth animations
     # pygame.HWSURFACE: Uses hardware acceleration if available. Using pygame.HWSURFACE is a way to leverage the GPU for better performance in rendering graphics. 
     main_surface = pygame.display.set_mode((1600, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
-    advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
 else:
     os.environ["SDL_VIDEODRIVER"] = "dummy"     # Run without opening window(during testing for eg.)
     main_surface = None
@@ -58,9 +51,7 @@ episode_count = deep_traffic_agent.model.get_count_episodes()   # deep_traffic_a
 speed_counter_avg = []
 hard_brake_avg = []
 alternate_line_switching = []
-
 action_stats = np.zeros(5, np.int32)
-
 PREDEFINED_MAX_CAR = config.MAX_SIMULATION_CAR  # 60
 
 # New episode/game round
@@ -85,42 +76,15 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                        lane=6,          # means ?
                        is_subject=False,
                        score=score,
-                       subject=subject_car)
-                   for i in range(6, 7)] # TODO Can remove this line.
+                       subject=subject_car)]
 
     frame = 0
-
     game_ended = False
-
     delay_count = 0
     speed_counter = []
     subject_car_action = 'M'
 
     while True: # frame < config.MAX_FRAME_COUNT:
-        # brick draw
-        # bat and ball draw
-        # events
-
-        # Alternate for lines 105 to 123 is below(124-133)
-        # if config.VISUALENABLED and not config.DLAGENTENABLED:      # True and not False
-        #     pressed_key = pygame.key.get_pressed()  # returns a list representing the state of every key on the keyboard. Each element in the list is 1 if the corresponding key is currently being held down, and 0 otherwise.
-        #     keydown_key = []
-
-        #     for event in pygame.event.get():    # iterates through all the events in the Pygame event queue, allowing the program to respond to user inputs and other events.
-        #         if event.type == QUIT:
-        #             pygame.quit()
-        #             sys.exit()
-        #         elif event.type == pygame.KEYDOWN:  # If a KEYDOWN event is detected (i.e., a key was just pressed down), the key code of the pressed key is appended to the keydown_key list.
-        #             keydown_key.append(event.key)
-
-        # if config.VISUALENABLED:
-        #     pressed_key = pygame.key.get_pressed()
-        #     keydown_key = []
-
-        #     for event in pygame.event.get():
-        #         if event.type == QUIT or event.type == pygame.K_q:  # pygame.K_q is being used to refer to the Q key
-        #             pygame.quit()
-        #             sys.exit()
         if config.VISUALENABLED:
             pressed_key = pygame.key.get_pressed()
             keydown_key = []
@@ -132,9 +96,7 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
 
-
-        # Setup game background
-        draw_basic_road(main_surface, subject_car.speed)
+        draw_basic_road(main_surface, subject_car.speed)    # Setup game background
 
         # Car to identify available moves in the order from top to bottom
         cars = [subject_car]
@@ -156,7 +118,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                     new_car_speed = np.random.randint(30, 91)  # 91 because randint's upper bound is exclusive
                     new_car_y = 1010    # indicating that it will appear at the back of the screen
                     new_car_lane = np.random.choice(position)
-                    new_car_y = 1010
                 else:
                     new_car_speed = np.random.randint(30, 61)
                     new_car_y = -100    # will appear front of the screen
@@ -205,16 +166,14 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 continue
 
             if config.DLAGENTENABLED:
-                # Get prediction from DeepTrafficAgent
-                q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)
+                q_values, temp_action = car.decide(game_ended, cache=cache, is_training=is_training)    # Get prediction from DeepTrafficAgent
                 if not cache:
                     subject_car_action = temp_action
                     q_values = q_values.sum().item()  # Convert PyTorch tensor to Python scalar
                     if not is_training:
                         action_stats[deep_traffic_agent.get_action_index(temp_action)] += 1
             elif config.VISUALENABLED:
-                # Manual control
-                is_controlled = False
+                is_controlled = False   # Manual control
                 for key in monitor_keys:
                     if pressed_key[key] or key in keydown_key:
                         is_controlled = True
@@ -247,9 +206,6 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             draw_actions(main_surface, subject_car_action)
             draw_gauge(main_surface, subject_car.speed)
 
-            # Setup advanced view
-            advanced_road.draw(frame, subject_car)
-
             # collision detection
             fpsClock.tick(20000)
             pygame.event.poll()
@@ -258,22 +214,23 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
         frame += 1
         speed_counter.append(subject_car.speed)
 
+        # why is the sum of q_values being printed for each frame? what should we infer?
         if q_values is not None:
             deep_traffic_agent.model.log_q_values(q_values) # While loop ends here
 
     episode_count = deep_traffic_agent.model.increase_count_episodes()
     avg_speed = np.average(speed_counter)
-    if not is_training:
-        speed_counter_avg.append(avg_speed)
-        deep_traffic_agent.model.log_testing_speed(avg_speed)
-    else:
-        print("Average speed for episode{}: {}".format(episode_count, avg_speed))
-        deep_traffic_agent.model.log_average_speed(avg_speed)
-    deep_traffic_agent.model.log_total_frame(frame)
-    deep_traffic_agent.model.log_terminated(frame < config.MAX_FRAME_COUNT - 1)
-    deep_traffic_agent.model.log_reward(score.score)
-
-    deep_traffic_agent.model.log_hard_brake_count(subject_car.hard_brake_count)
+    # if not is_training:
+    #     speed_counter_avg.append(avg_speed)
+    #     deep_traffic_agent.model.log_testing_speed(avg_speed)
+    # else:
+    #     print("Average speed for episode{}: {}".format(episode_count, avg_speed))
+    #     deep_traffic_agent.model.log_average_speed(avg_speed)
+    # deep_traffic_agent.model.log_total_frame(frame)
+    # deep_traffic_agent.model.log_terminated(frame < config.MAX_FRAME_COUNT - 1)
+    # deep_traffic_agent.model.log_reward(score.score)
+    # deep_traffic_agent.model.log_hard_brake_count(subject_car.hard_brake_count)
+    logger.info(f"Episode {episode_count} completed. Average speed: {avg_speed}, Total frames: {frame}, Total reward: {score.score}, Final speed: {subject_car.speed}")
 
     if episode_count > config.MAX_EPISODE:
         alternate_line_switching.append(subject_car.alternate_line_switching)
@@ -300,4 +257,5 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
             hard_brake_avg = []
             alternate_line_switching = []
 
-deep_traffic_agent.model.log_action_frequency(action_stats)
+# deep_traffic_agent.model.log_action_frequency(action_stats)
+logger.info(f"Training completed. Total episodes: {episode_count}, Action frequencies: {action_stats}")
