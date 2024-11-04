@@ -215,8 +215,10 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
         speed_counter.append(subject_car.speed)
 
         # why is the sum of q_values being printed for each frame? what should we infer?
-        if q_values is not None:
-            deep_traffic_agent.model.log_q_values(q_values) # While loop ends here
+        # if q_values is not None:
+            # deep_traffic_agent.model.log_q_values(q_values) # While loop ends here
+            # logger.info(f"Episode {episode_count} completed. Q values: {q_values}, ")
+
 
     episode_count = deep_traffic_agent.model.increase_count_episodes()
     avg_speed = np.average(speed_counter)

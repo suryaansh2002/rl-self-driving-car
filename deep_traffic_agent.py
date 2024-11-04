@@ -101,9 +101,15 @@ class DeepTrafficAgent:
                             end_episode,
                             self.previous_actions,
                             next_actions))
+        
+        # self.logger.info(f"Memory size: {len(self.memory)}")
+
+        # # Check if memory has enough experiences for training
+        # if len(self.memory) > BATCH_SIZE:
+        #     self.logger.info("Memory has sufficient experiences for a training batch.")
 
         self.count_states = self.model.get_count_states()   # Synchronizes the agent’s state count with the model’s internal state counter.
-
+        # print("states : ", self.count_states)
         # Starts training after a minimum number of states have been encountered (warm-up period). LEARN_START = 100000
         if is_training and self.count_states > LEARN_START and len(self.memory) > BATCH_SIZE:
             self.optimize()
@@ -155,10 +161,15 @@ class DeepTrafficAgent:
 
         self.model.log_training_loss(loss.item())
         episode_count = self.model.get_count_episodes()
+        state_count = self.model.get_count_states()
+        # self.logger.info(
+        #     f"Episode: {episode_count} , "
+        #     f"Mean Q-value: {current_q_values.mean().item():.4f} ,"
+        #     f"Loss: {loss.item():.4f}, "
+        #     )
         self.logger.info(
-            f"Episode: {episode_count} , "
-            f"Loss: {loss.item():.4f}, "
-            )
+            f"In Remember: - Episode: {episode_count}, State: {state_count}, Mean Q-value: {current_q_values.mean().item():.4f}, Loss: {loss.item():.4f}"
+        )
 
 class LinearControlSignal:
     def __init__(self, start_value, end_value, repeat=False):
