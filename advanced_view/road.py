@@ -68,13 +68,15 @@ class AdvancedRoad:
             if self.lane != lane:
                 self.lane += 0.25 if lane > self.lane else - 0.25
             pygame.draw.rect(self.surface, COLOR['white'], (0, 0, 1010, self.surface.get_height()))
+            temp_surface = pygame.Surface((0, 800), pygame.SRCALPHA)
+            temp_surface.fill((255, 255, 255, 0))  # Fill with the color and opacity
 
             if abs(self.lane - lane) < 0.1:
                 break
             pygame.event.poll()
             pygame.display.flip()
 
-        self.lane = lane
+        # self.lane = lane
 
     def draw_sky(self, frame):
         view = pygame.Surface((self.sky_width, self.sky_height))

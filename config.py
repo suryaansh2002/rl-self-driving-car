@@ -20,7 +20,7 @@ VISUAL_VISION_B = 7  # less than 30
 
 # # When not training
 VISUALENABLED = True 
-DLAGENTENABLED = False  # Make False to simulate manually
+DLAGENTENABLED = True  # Make False to simulate manually
 DL_IS_TRAINING = False  
 
 MAX_SIMULATION_CAR = 60
@@ -55,6 +55,6 @@ IDENTIFIER = os.environ.get('IDENTIFIER', 'PA')
 MODEL_NAME = '{}_R{}__DQN__lr={}_input=36-3_conv=2_FC=2_nn=100-5_batch={}'\
     .format(IDENTIFIER, ROUND, LEARNING_RATE, BATCH_SIZE)
 
-ROAD_VIEW_OFFSET = 0
-INPUT_VIEW_OFFSET_X = 405
+ROAD_VIEW_OFFSET = 1000
+INPUT_VIEW_OFFSET_X = 100
 INPUT_VIEW_OFFSET_Y = 320

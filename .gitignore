@@ -10,3 +10,4 @@ rl-playground
 .DS_Store
 rl_playground
 logs/*
+plots/*.log

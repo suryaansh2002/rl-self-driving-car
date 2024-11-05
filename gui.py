@@ -49,7 +49,7 @@ if config.VISUALENABLED:
     # sets up main display surface with resolution of 1600x800 pixels. flags use are:
     # pygame.DOUBLEBUF - Uses double buffering to help with smooth animations
     # pygame.HWSURFACE: Uses hardware acceleration if available. Using pygame.HWSURFACE is a way to leverage the GPU for better performance in rendering graphics. 
-    main_surface = pygame.display.set_mode((700, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
+    main_surface = pygame.display.set_mode((1300, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
 
     advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
   
