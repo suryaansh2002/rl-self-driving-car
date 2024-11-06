@@ -49,7 +49,7 @@ if config.VISUALENABLED:
     # sets up main display surface with resolution of 1600x800 pixels. flags use are:
     # pygame.DOUBLEBUF - Uses double buffering to help with smooth animations
     # pygame.HWSURFACE: Uses hardware acceleration if available. Using pygame.HWSURFACE is a way to leverage the GPU for better performance in rendering graphics. 
-    main_surface = pygame.display.set_mode((1300, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
+    main_surface = pygame.display.set_mode((800, 800), pygame.DOUBLEBUF | pygame.HWSURFACE)
 
     advanced_road = AdvancedRoad(main_surface, 0, 550, 1010, 800, lane=6)
   
@@ -106,13 +106,14 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
         if config.VISUALENABLED: # Show GUI, playing using DeepTrafficAgent
             pressed_key = pygame.key.get_pressed()
             keydown_key = []
-
             for event in pygame.event.get():
                 if event.type == QUIT or event.type == pygame.K_q:
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.KEYDOWN and not config.DLAGENTENABLED:
                     keydown_key.append(event.key)
+                    print(event.key)
+                    
 
             advanced_road.draw(frame, subject_car) # Moved here to render advanced view first and basic view on top of it
 
@@ -234,9 +235,12 @@ while episode_count < config.MAX_EPISODE + config.TESTING_EPISODE * 3:      # 20
                 for key in monitor_keys:
                     if pressed_key[key] or key in keydown_key:
                         is_controlled = True
-                        control_car(subject_car, key)
+                        k = control_car(subject_car, key)
+                        subject_car_action = k  
                 if not is_controlled:
                     car.move('M')
+                    subject_car_action = 'M'
+                    
 
         # Show road overlay (Safety)
         # draw_road_overlay_safety(main_surface, lane_map)

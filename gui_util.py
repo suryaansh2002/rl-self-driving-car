@@ -153,21 +153,28 @@ def draw_road_overlay_vision(surface, subject_car):
     for y in range(min_y, max_y + 1):
         for x in range(min_x, max_x + 1):
             pygame.draw.rect(surface, green, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10))
-            # pygame.draw.rect(surface, grey, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10), 1)
+            pygame.draw.rect(surface, grey, (ROAD_VIEW_OFFSET + x * 50 + 15 + 1, y * 10, 49, 10), 1)
 
 
 def control_car(target_car, keydown):
+    a = ''
     if keydown == pygame.K_UP:
         target_car.move('A')
+        a = 'A'
     elif keydown == pygame.K_DOWN:
         target_car.move('D')
+        a = 'D'
     else:
         target_car.move('M')
+        a = 'L'
 
     if keydown == pygame.K_LEFT:
         target_car.switch_lane('L')
+        a = 'L'
     elif keydown == pygame.K_RIGHT:
         target_car.switch_lane('R')
+        a = 'R'
+    return a
 
 
 def identify_free_lane(cars):
